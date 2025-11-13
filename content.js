@@ -29,7 +29,12 @@ function extractJobData() {
   // --- Data Extraction ---
 
   const jobTitle = getText('[data-v-73c2c436] h4.mt-0 span');
-  const fullJobDescription = getText('[data-test="Description"] p');
+  
+  let fullJobDescription = 'N/A';
+  const descriptionContainer = document.querySelector('[data-test="Description"]');
+  if (descriptionContainer) {
+      fullJobDescription = descriptionContainer.innerText.trim();
+  }
   
   const jobTypeElement = findElementByText('[data-v-52956d3e] li .description', 'price') || findElementByText('[data-v-52956d3e] li .description', 'Hourly');
   const jobType = jobTypeElement ? jobTypeElement.innerText.trim() : 'N/A';
