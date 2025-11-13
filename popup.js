@@ -51,9 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Type</dt><dd>${data.jobType}</dd>
           <dt>Budget / Rate</dt><dd>${data.budgetOrRate}</dd>
           <dt>Experience</dt><dd>${data.experienceLevel}</dd>
+          <dt class="separator" colspan="2"></dt>
           <dt>Posted</dt><dd>${data.jobAge}</dd>
+          <dt>Last Viewed</dt><dd>${data.lastViewed}</dd>
           <dt>Proposals</dt><dd>${data.proposalsCount}</dd>
+          <dt>Interviewing</dt><dd>${data.interviewing}</dd>
           <dt>Invites Sent</dt><dd>${data.invitesSent}</dd>
+          <dt>Hires</dt><dd>${data.hires} ${parseInt(data.hires) > 0 ? '❌' : ''}</dd>
         </dl>
         <h4>Full Job Description</h4>
         <div class="description-box">
@@ -123,8 +127,11 @@ Job Type: ${data.jobType}
 Budget / Rate: ${data.budgetOrRate}
 Experience Level: ${data.experienceLevel}
 Posted: ${data.jobAge}
+Last Viewed: ${data.lastViewed}
 Proposals: ${data.proposalsCount}
+Interviewing: ${data.interviewing}
 Invites Sent: ${data.invitesSent}
+Hires: ${data.hires}
 
 --- CLIENT DETAILS ---
 Payment Verified: ${data.paymentVerified}

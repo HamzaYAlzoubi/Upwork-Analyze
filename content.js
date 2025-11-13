@@ -36,16 +36,36 @@ function extractJobData() {
   
   const budgetOrRate = getText('[data-v-52956d3e] li:first-child strong');
   
-  const jobAge = getText('.posted-on-line span');
-  
-  let proposalsCount = 'N/A';
-  const activityItems = document.querySelectorAll('[data-v-27de751d] .ca-item');
-  activityItems.forEach(item => {
-    const titleEl = item.querySelector('.title');
-    if (titleEl && titleEl.innerText.trim() === 'Proposals:') {
-      proposalsCount = getText('.value', item);
+  let jobAge = 'N/A';
+  const postedOnLineEl = document.querySelector('.posted-on-line');
+  if (postedOnLineEl && postedOnLineEl.children[0]) {
+      jobAge = postedOnLineEl.children[0].innerText.replace('Posted', '').trim();
+  }
+
+  const getActivityValue = (activityTitle) => {
+    const activityHeader = Array.from(document.querySelectorAll('h5')).find(
+        h5 => h5.innerText.trim() === 'Activity on this job'
+    );
+    if (!activityHeader) return 'N/A';
+    const activitySection = activityHeader.closest('section');
+    if (!activitySection) return 'N/A';
+    const allItems = activitySection.querySelectorAll('.ca-item');
+    const targetItem = Array.from(allItems).find(item => {
+        const titleEl = item.querySelector('.title');
+        return titleEl && titleEl.innerText.trim() === activityTitle;
+    });
+    if (targetItem) {
+        const valueEl = targetItem.querySelector('.value');
+        return valueEl ? valueEl.innerText.trim() : 'N/A';
     }
-  });
+    return 'N/A';
+  };
+
+  const proposalsCount = getActivityValue('Proposals:');
+  const interviewing = getActivityValue('Interviewing:');
+  const invitesSent = getActivityValue('Invites sent:');
+  const lastViewed = getActivityValue('Last viewed by client:');
+  const hires = getActivityValue('Hires:');
 
   const paymentVerifiedEl = findElementByText('[data-v-8098830c] strong', 'Payment method verified');
   const paymentVerified = paymentVerifiedEl ? 'Yes' : 'No';
@@ -68,27 +88,17 @@ function extractJobData() {
   const clientReviewsCountMatch = clientRatingText.match(/of (\d+ reviews)/);
   const clientReviewsCount = clientReviewsCountMatch ? clientReviewsCountMatch[1] : 'N/A';
 
-  let invitesSent = 'N/A';
-  activityItems.forEach(item => {
-    const titleEl = item.querySelector('.title');
-    if (titleEl && titleEl.innerText.trim() === 'Invites sent:') {
-      invitesSent = getText('.value', item);
-    }
-  });
-
   const recentHistoryItems = Array.from(document.querySelectorAll('[data-cy="job"].item'));
   const clientHistory = recentHistoryItems.map(item => {
     const projectTitle = getText('[data-cy="job-title"]', item);
     const freelancerName = getText('a[href*="/freelancers/"]', item);
     
-    // Feedback given by the client to the freelancer
     const clientFeedbackElement = item.querySelector('.text-body-sm.mt-2x.mb-2x');
     let clientFeedback = 'No feedback given';
     if (clientFeedbackElement && !clientFeedbackElement.innerText.includes('To freelancer:')) {
         clientFeedback = clientFeedbackElement.innerText.trim();
     }
 
-    // Feedback given by the freelancer to the client
     const freelancerFeedbackElement = findElementByText('.text-body-sm', 'To freelancer:', item);
     let freelancerFeedback = 'N/A';
     if (freelancerFeedbackElement) {
@@ -112,7 +122,11 @@ function extractJobData() {
     jobType,
     budgetOrRate,
     jobAge,
+    lastViewed,
     proposalsCount,
+    interviewing,
+    invitesSent,
+    hires,
     paymentVerified,
     clientLocation,
     experienceLevel,
@@ -123,7 +137,6 @@ function extractJobData() {
     totalSpent,
     clientRating,
     clientReviewsCount,
-    invitesSent,
     clientHistory
   };
 }

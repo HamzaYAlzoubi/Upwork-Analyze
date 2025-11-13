@@ -118,6 +118,13 @@ dt {
   color: #555;
 }
 
+dt.separator {
+  grid-column: 1 / -1;
+  height: 1px;
+  background-color: var(--border-color);
+  margin: 4px 0;
+}
+
 dd {
   margin: 0;
   color: #111;
