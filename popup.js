@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const analysisResultsDiv = document.getElementById('analysis-results');
 
@@ -51,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Type</dt><dd>${data.jobType}</dd>
           <dt>Budget / Rate</dt><dd>${data.budgetOrRate}</dd>
           <dt>Experience</dt><dd>${data.experienceLevel}</dd>
+          <dt>Connects</dt><dd>Required: ${data.requiredConnects} / Available: ${data.availableConnects}</dd>
           <dt class="separator" colspan="2"></dt>
           <dt>Posted</dt><dd>${data.jobAge}</dd>
           <dt>Last Viewed</dt><dd>${data.lastViewed}</dd>
@@ -119,13 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
   - Feedback from Client: ${item.clientFeedback}`
       ).join('\n\n');
 
-      return 
-`
+      return `
 --- JOB DETAILS ---
 Job Title: ${data.jobTitle}
 Job Type: ${data.jobType}
 Budget / Rate: ${data.budgetOrRate}
 Experience Level: ${data.experienceLevel}
+Connects: Required ${data.requiredConnects} / Available ${data.availableConnects}
 Posted: ${data.jobAge}
 Last Viewed: ${data.lastViewed}
 Proposals: ${data.proposalsCount}
@@ -147,7 +147,7 @@ ${data.fullJobDescription}
 
 --- CLIENT RECENT HISTORY ---
 ${historyText}
-`
+`;
   }
 
 });

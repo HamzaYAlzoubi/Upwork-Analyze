@@ -34,7 +34,21 @@ function extractJobData() {
   const jobTypeElement = findElementByText('[data-v-52956d3e] li .description', 'price') || findElementByText('[data-v-52956d3e] li .description', 'Hourly');
   const jobType = jobTypeElement ? jobTypeElement.innerText.trim() : 'N/A';
   
-  const budgetOrRate = getText('[data-v-52956d3e] li:first-child strong');
+  let budgetOrRate = 'N/A';
+  const fixedPriceEl = document.querySelector('[data-v-52956d3e] li:has([data-cy="fixed-price"]) strong');
+  const hourlyRateEl = document.querySelector('[data-v-52956d3e] li:has([data-cy="clock-timelog"])');
+
+  if (fixedPriceEl) {
+      budgetOrRate = fixedPriceEl.innerText.trim();
+  } else if (hourlyRateEl) {
+      const minRate = getText('div[data-v-801afba5]:first-child strong', hourlyRateEl);
+      const maxRate = getText('div[data-v-801afba5]:last-child strong', hourlyRateEl);
+      if (minRate !== 'N/A' && maxRate !== 'N/A') {
+          budgetOrRate = `${minRate} - ${maxRate}`;
+      } else if (minRate !== 'N/A') {
+          budgetOrRate = minRate;
+      }
+  }
   
   let jobAge = 'N/A';
   const postedOnLineEl = document.querySelector('.posted-on-line');
@@ -88,6 +102,20 @@ function extractJobData() {
   const clientReviewsCountMatch = clientRatingText.match(/of (\d+ reviews)/);
   const clientReviewsCount = clientReviewsCountMatch ? clientReviewsCountMatch[1] : 'N/A';
 
+  let requiredConnects = 'N/A';
+  let availableConnects = 'N/A';
+  const connectsContainer = document.querySelector('div.text-light-on-muted[data-v-6d4ec4a7]');
+  if (connectsContainer) {
+      const requiredLabel = findElementByText('span', 'Required Connects to submit a proposal:', connectsContainer);
+      if (requiredLabel && requiredLabel.nextElementSibling) {
+          requiredConnects = requiredLabel.nextElementSibling.innerText.trim();
+      }
+      const availableDiv = findElementByText('div.mt-2', 'Available Connects:', connectsContainer);
+      if (availableDiv) {
+          availableConnects = availableDiv.innerText.replace('Available Connects:', '').trim();
+      }
+  }
+
   const recentHistoryItems = Array.from(document.querySelectorAll('[data-cy="job"].item'));
   const clientHistory = recentHistoryItems.map(item => {
     const projectTitle = getText('[data-cy="job-title"]', item);
@@ -137,6 +165,8 @@ function extractJobData() {
     totalSpent,
     clientRating,
     clientReviewsCount,
+    requiredConnects,
+    availableConnects,
     clientHistory
   };
 }
