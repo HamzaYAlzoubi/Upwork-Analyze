@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Upwork Analyze",
+  "version": "1.0",
+  "description": "An extension to analyze Upwork job posts.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.upwork.com/jobs/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
