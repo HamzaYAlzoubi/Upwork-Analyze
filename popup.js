@@ -1,5 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
   const analysisResultsDiv = document.getElementById('analysis-results');
+  const suggestionsModal = document.getElementById('suggestions-modal');
+  const suggestionsBtn = document.getElementById('suggestions-btn');
+  const closeBtn = document.querySelector('.close-btn');
+  const saveSuggestionBtn = document.getElementById('save-suggestion-btn');
+  const suggestionText = document.getElementById('suggestion-text');
+
+  // --- Suggestions Modal Logic ---
+
+  // Load any saved suggestion from localStorage
+  const savedSuggestion = localStorage.getItem('suggestion');
+  if (savedSuggestion) {
+    suggestionText.value = savedSuggestion;
+  }
+
+  // When the user clicks the button, open the modal 
+  suggestionsBtn.onclick = function() {
+    suggestionsModal.style.display = "block";
+  }
+
+  // When the user clicks on <span> (x), close the modal
+  closeBtn.onclick = function() {
+    suggestionsModal.style.display = "none";
+  }
+
+  // When the user clicks the save button, save to localStorage and close
+  saveSuggestionBtn.onclick = function() {
+    localStorage.setItem('suggestion', suggestionText.value);
+    saveSuggestionBtn.textContent = 'Saved!';
+    setTimeout(() => {
+      suggestionsModal.style.display = "none";
+      saveSuggestionBtn.textContent = 'Save Suggestion';
+    }, 1000);
+  }
+
+  // When the user clicks anywhere outside of the modal, close it
+  window.onclick = function(event) {
+    if (event.target == suggestionsModal) {
+      suggestionsModal.style.display = "none";
+    }
+  }
+
+  // --- End of Suggestions Modal Logic ---
+
 
   // Query the active tab and send a message to the content script
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -236,13 +279,23 @@ document.addEventListener('DOMContentLoaded', () => {
   function setupButtons(data) {
     const copyBtn = document.getElementById('copy-all-btn');
     const downloadBtn = document.getElementById('download-btn');
+    const copyBtnTextSpan = copyBtn.querySelector('span');
+    const copyBtnIcon = copyBtn.querySelector('svg');
 
     const fullText = generateFullText(data);
 
     copyBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(fullText).then(() => {
-        copyBtn.textContent = 'Copied!';
-        setTimeout(() => { copyBtn.textContent = 'Copy All'; }, 2000);
+        if (copyBtnTextSpan && copyBtnIcon) {
+          copyBtnIcon.style.display = 'none';
+          copyBtnTextSpan.textContent = 'Copied!';
+        }
+        setTimeout(() => {
+          if (copyBtnTextSpan && copyBtnIcon) {
+            copyBtnIcon.style.display = 'inline';
+            copyBtnTextSpan.textContent = 'Copy All';
+          }
+        }, 2000);
       });
     });
 

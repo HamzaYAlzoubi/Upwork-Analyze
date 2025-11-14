@@ -3,6 +3,11 @@
   "name": "Upwork Analyze",
   "version": "1.0",
   "description": "An extension to analyze Upwork job posts.",
+  "icons": {
+    "16": "images/icon.png",
+    "48": "images/icon.png",
+    "128": "images/icon.png"
+  },
   "permissions": [
     "activeTab",
     "scripting"
