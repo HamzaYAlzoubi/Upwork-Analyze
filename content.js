@@ -86,8 +86,14 @@ function extractJobData() {
   const lastViewed = getActivityValue('Last viewed by client:');
   const hires = getActivityValue('Hires:');
 
-  const paymentVerifiedEl = findElementByText('[data-v-8098830c] strong', 'Payment method verified');
-  const paymentVerified = paymentVerifiedEl ? 'Yes' : 'No';
+  let paymentVerified = 'No';
+  const aboutClientContainer = findElementByText('h5', 'About the client')?.closest('[data-test="about-client-container"]');
+  if (aboutClientContainer) {
+      const paymentEl = findElementByText('strong', 'Payment method verified', aboutClientContainer);
+      if (paymentEl) {
+          paymentVerified = 'Yes';
+      }
+  }
 
   const clientLocation = getText('[data-qa="client-location"] strong');
   const experienceLevel = getText('li:has([data-cy="expertise"]) strong');
@@ -101,11 +107,26 @@ function extractJobData() {
   const clientJobsPosted = getText('[data-qa="client-job-posting-stats"] strong');
   const openJobs = openJobsMatch ? openJobsMatch[1] : 'N/A';
 
-  const totalSpent = getText('[data-qa="client-spend"] strong span span');
-  const clientRatingText = getText('[data-testid="buyer-rating"]');
-  const clientRating = clientRatingText.split(' ')[0] || 'N/A';
-  const clientReviewsCountMatch = clientRatingText.match(/of (\d+ reviews)/);
-  const clientReviewsCount = clientReviewsCountMatch ? clientReviewsCountMatch[1] : 'N/A';
+  const avgHourlyRateText = getText('strong[data-qa="client-hourly-rate"]');
+  const avgHourlyRate = avgHourlyRateText.split(' avg hourly rate paid')[0] || 'N/A';
+  const totalHours = getText('div[data-qa="client-hours"]');
+
+  const totalSpent = getText('strong[data-qa="client-spend"] span span');
+  
+  let clientRating = 'N/A';
+  let clientReviewsCount = 'N/A';
+  const ratingContainer = document.querySelector('[data-testid="buyer-rating"]');
+  if (ratingContainer) {
+      const ratingTextEl = ratingContainer.querySelector('span.nowrap');
+      if (ratingTextEl) {
+          const ratingText = ratingTextEl.innerText.trim();
+          const parts = ratingText.split(' of ');
+          if (parts.length === 2) {
+              clientRating = parts[0];
+              clientReviewsCount = parts[1];
+          }
+      }
+  }
 
   let requiredConnects = 'N/A';
   let availableConnects = 'N/A';
@@ -167,6 +188,8 @@ function extractJobData() {
     clientHireRate,
     clientJobsPosted,
     openJobs,
+    avgHourlyRate,
+    totalHours,
     totalSpent,
     clientRating,
     clientReviewsCount,
