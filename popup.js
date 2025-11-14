@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (response && response.jobData) {
           renderJobData(response.jobData);
+          setupButtons(response.jobData);
         } else {
           analysisResultsDiv.innerHTML = '<p class="error">Failed to retrieve job data. The page structure might have changed.</p>';
         }
@@ -132,17 +133,17 @@ document.addEventListener('DOMContentLoaded', () => {
         hireRateIcon = paymentNotVerifiedIcon;
     } else {
         const hireRateValue = parseInt(data.clientHireRate.replace('%', ''));
-        const openJobsValue = parseInt(data.openJobs);
+        const jobsPostedValue = parseInt(data.clientJobsPosted); // Correctly use jobs posted
 
         if (hireRateValue < 60) {
             hireRateIcon = paymentNotVerifiedIcon;
         } else if (hireRateValue >= 60 && hireRateValue <= 85) {
             hireRateIcon = proposalsWarningIcon;
         } else if (hireRateValue > 85) {
-            if (openJobsValue < 5) {
-                hireRateIcon = proposalsWarningIcon;
-            } else {
+            if (jobsPostedValue > 5) { // Check jobs posted, not open jobs
                 hireRateIcon = paymentVerifiedIcon;
+            } else {
+                hireRateIcon = proposalsWarningIcon;
             }
         }
     }
@@ -179,6 +180,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let jobAgeIcon = '';
+    const jobAgeLowerCase = data.jobAge.toLowerCase();
+    if (
+        jobAgeLowerCase.includes('minute') ||
+        jobAgeLowerCase.includes('now') ||
+        jobAgeLowerCase.includes('1 hour')
+    ) {
+        jobAgeIcon = paymentVerifiedIcon;
+    }
+
     analysisResultsDiv.innerHTML = `
       <div class="data-section">
         <h3>Job Details</h3>
@@ -189,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Experience</dt><dd>${data.experienceLevel}</dd>
           <dt>Connects</dt><dd>Required: ${data.requiredConnects} / Available: ${data.availableConnects}</dd>
           <dt class="separator" colspan="2"></dt>
-          <dt>Posted</dt><dd>${data.jobAge}</dd>
+          <dt>Posted</dt><dd>${data.jobAge} ${jobAgeIcon}</dd>
           <dt>Last Viewed</dt><dd>${data.lastViewed}</dd>
           <dt>Proposals</dt><dd>${data.proposalsCount} ${proposalsIcon}</dd>
           <dt>Interviewing</dt><dd>${data.interviewing}</dd>

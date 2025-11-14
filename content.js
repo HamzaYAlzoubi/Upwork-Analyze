@@ -28,7 +28,7 @@ function extractJobData() {
 
   // --- Data Extraction ---
 
-  const jobTitle = getText('[data-v-73c2c436] h4.mt-0 span');
+  const jobTitle = getText('h4.mt-0 span.flex-1');
   
   let fullJobDescription = 'N/A';
   const descriptionContainer = document.querySelector('[data-test="Description"]');
@@ -36,12 +36,12 @@ function extractJobData() {
       fullJobDescription = descriptionContainer.innerText.trim();
   }
   
-  const jobTypeElement = findElementByText('[data-v-52956d3e] li .description', 'price') || findElementByText('[data-v-52956d3e] li .description', 'Hourly');
+  const jobTypeElement = findElementByText('ul.features li .description', 'price') || findElementByText('ul.features li .description', 'Hourly');
   const jobType = jobTypeElement ? jobTypeElement.innerText.trim() : 'N/A';
   
   let budgetOrRate = 'N/A';
-  const fixedPriceEl = document.querySelector('[data-v-52956d3e] li:has([data-cy="fixed-price"]) strong');
-  const hourlyRateEl = document.querySelector('[data-v-52956d3e] li:has([data-cy="clock-timelog"])');
+  const fixedPriceEl = document.querySelector('ul.features li:has([data-cy="fixed-price"]) strong');
+  const hourlyRateEl = document.querySelector('ul.features li:has([data-cy="clock-timelog"])');
 
   if (fixedPriceEl) {
       budgetOrRate = fixedPriceEl.innerText.trim();
@@ -117,14 +117,38 @@ function extractJobData() {
   let clientReviewsCount = 'N/A';
   const ratingContainer = document.querySelector('[data-testid="buyer-rating"]');
   if (ratingContainer) {
-      const ratingTextEl = ratingContainer.querySelector('span.nowrap');
-      if (ratingTextEl) {
-          const ratingText = ratingTextEl.innerText.trim();
-          const parts = ratingText.split(' of ');
-          if (parts.length === 2) {
-              clientRating = parts[0];
-              clientReviewsCount = parts[1];
+      // --- RATING ---
+      // Try the new structure first
+      let ratingValueEl = ratingContainer.querySelector('.air3-rating-value-text');
+      // If not found, try the old structure
+      if (!ratingValueEl) {
+          ratingValueEl = ratingContainer.querySelector('.air3-rating-point');
+      }
+      
+      if (ratingValueEl) {
+          clientRating = ratingValueEl.innerText.trim();
+      } else {
+          // As a fallback, try to get it from the combined text
+          const ratingMatch = ratingContainer.innerText.match(/^(\d\.\d+)/);
+          if (ratingMatch) {
+              clientRating = ratingMatch[1];
           }
+      }
+
+      // --- REVIEW COUNT ---
+      // Get all text content to parse from
+      const fullText = ratingContainer.innerText;
+      
+      // Look for "(X reviews)" pattern first (old structure)
+      let reviewsMatch = fullText.match(/\((\d+\s+reviews?)\)/);
+      
+      // If not found, look for "of X reviews" pattern (new structure)
+      if (!reviewsMatch) {
+          reviewsMatch = fullText.match(/of\s+(\d+\s+reviews?)/);
+      }
+
+      if (reviewsMatch) {
+          clientReviewsCount = reviewsMatch[1]; // Group 1 captures "X reviews"
       }
   }
 
