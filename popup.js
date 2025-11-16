@@ -43,6 +43,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- End of Suggestions Modal Logic ---
 
+  function parseMoney(moneyString) {
+      if (typeof moneyString !== 'string' || moneyString === 'N/A') return 0;
+      let num = parseFloat(moneyString.replace(/[^0-9.]/g, ''));
+      if (moneyString.toUpperCase().includes('K')) {
+          num *= 1000;
+      }
+      if (moneyString.toUpperCase().includes('M')) {
+          num *= 1000000;
+      }
+      return num;
+  }
 
   // Query the active tab and send a message to the content script
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -119,18 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
             stars += i < roundedRating ? fullStar : emptyStar;
         }
         return `<span class="star-rating">${stars}</span>`;
-    }
-
-    function parseMoney(moneyString) {
-        if (typeof moneyString !== 'string' || moneyString === 'N/A') return 0;
-        let num = parseFloat(moneyString.replace(/[^0-9.]/g, ''));
-        if (moneyString.toUpperCase().includes('K')) {
-            num *= 1000;
-        }
-        if (moneyString.toUpperCase().includes('M')) {
-            num *= 1000000;
-        }
-        return num;
     }
 
     const starRating = generateStars(parseFloat(data.clientRating));
