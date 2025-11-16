@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const paymentVerifiedIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="var(--icon-color, #14a800)" fill-rule="evenodd" vector-effect="non-scaling-stroke" stroke="var(--icon-color, #14a800)" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M20.4 13.1c.8 1 .3 2.5-.9 2.9-.8.2-1.3 1-1.3 1.8 0 1.3-1.2 2.2-2.5 1.8-.8-.3-1.7 0-2.1.7-.7 1.1-2.3 1.1-3 0-.5-.7-1.3-1-2.1-.7-1.4.4-2.6-.6-2.6-1.8 0-.8-.5-1.6-1.3-1.8-1.2-.4-1.7-1.8-.9-2.9.5-.7.5-1.6 0-2.2-.9-1-.4-2.5.9-2.9.8-.2 1.3-1 1.3-1.8C5.9 5 7.1 4 8.3 4.5c.8.3 1.7 0 2.1-.7.7-1.1 2.3-1.1 3 0 .5.7 1.3 1 2.1.7 1.4-.5 2.6.5 2.6 1.7 0 .8.5 1.6 1.3 1.8 1.2.4 1.7 1.8.9 2.9-.4.6-.4 1.6.1 2.2z" clip-rule="evenodd"></path><path vector-effect="non-scaling-stroke" stroke="var(--icon-color-bg, #fff)" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M15.5 9.7L11 14.3l-2.5-2.5"></path></svg>`;
     const paymentNotVerifiedIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#d93025" fill-rule="evenodd" vector-effect="non-scaling-stroke" stroke="#d93025" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M20.4 13.1c.8 1 .3 2.5-.9 2.9-.8.2-1.3 1-1.3 1.8 0 1.3-1.2 2.2-2.5 1.8-.8-.3-1.7 0-2.1.7-.7 1.1-2.3 1.1-3 0-.5-.7-1.3-1-2.1-.7-1.4.4-2.6-.6-2.6-1.8 0-.8-.5-1.6-1.3-1.8-1.2-.4-1.7-1.8-.9-2.9.5-.7.5-1.6 0-2.2-.9-1-.4-2.5.9-2.9.8-.2 1.3-1 1.3-1.8C5.9 5 7.1 4 8.3 4.5c.8.3 1.7 0 2.1-.7.7-1.1 2.3-1.1 3 0 .5.7 1.3 1 2.1.7 1.4-.5 2.6.5 2.6 1.7 0 .8.5 1.6 1.3 1.8 1.2.4 1.7 1.8.9 2.9-.4.6-.4 1.6.1 2.2z" clip-rule="evenodd"></path><path vector-effect="non-scaling-stroke" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M15 9l-6 6m0-6l6 6"></path></svg>`;
     const proposalsWarningIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#ffc107" fill-rule="evenodd" vector-effect="non-scaling-stroke" stroke="#ffc107" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M20.4 13.1c.8 1 .3 2.5-.9 2.9-.8.2-1.3 1-1.3 1.8 0 1.3-1.2 2.2-2.5 1.8-.8-.3-1.7 0-2.1.7-.7 1.1-2.3 1.1-3 0-.5-.7-1.3-1-2.1-.7-1.4.4-2.6-.6-2.6-1.8 0-.8-.5-1.6-1.3-1.8-1.2-.4-1.7-1.8-.9-2.9.5-.7.5-1.6 0-2.2-.9-1-.4-2.5.9-2.9.8-.2 1.3-1 1.3-1.8C5.9 5 7.1 4 8.3 4.5c.8.3 1.7 0 2.1-.7.7-1.1 2.3-1.1 3 0 .5.7 1.3 1 2.1.7 1.4-.5 2.6.5 2.6 1.7 0 .8.5 1.6 1.3 1.8 1.2.4 1.7 1.8.9 2.9-.4.6-.4 1.6.1 2.2z" clip-rule="evenodd"></path><path vector-effect="non-scaling-stroke" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M12 8v6m0 3v.01"></path></svg>`;
+    const icons = { paymentVerifiedIcon, paymentNotVerifiedIcon, proposalsWarningIcon };
 
     let proposalsIcon = '';
     if (data.proposalsCount.includes('50+')) {
@@ -170,20 +171,19 @@ document.addEventListener('DOMContentLoaded', () => {
         jobsPostedIcon = paymentNotVerifiedIcon;
     }
 
-    // Logic for Hire Rate Icon
     let hireRateIcon = '';
     if (data.clientHireRate === 'N/A') {
         hireRateIcon = paymentNotVerifiedIcon;
     } else {
         const hireRateValue = parseInt(data.clientHireRate.replace('%', ''));
-        const jobsPostedValue = parseInt(data.clientJobsPosted); // Correctly use jobs posted
+        const jobsPostedValue = parseInt(data.clientJobsPosted);
 
         if (hireRateValue < 60) {
             hireRateIcon = paymentNotVerifiedIcon;
         } else if (hireRateValue >= 60 && hireRateValue <= 85) {
             hireRateIcon = proposalsWarningIcon;
         } else if (hireRateValue > 85) {
-            if (jobsPostedValue > 5) { // Check jobs posted, not open jobs
+            if (jobsPostedValue > 5) {
                 hireRateIcon = paymentVerifiedIcon;
             } else {
                 hireRateIcon = proposalsWarningIcon;
@@ -191,16 +191,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Logic for Member Since Icon
     let memberSinceIcon = '';
     if (data.clientJoinDate !== 'N/A') {
         const joinDate = new Date(data.clientJoinDate);
         const currentDate = new Date();
-
-        const diffYears = currentDate.getFullYear() - joinDate.getFullYear();
-        const diffMonths = currentDate.getMonth() - joinDate.getMonth();
-        const totalMonths = (diffYears * 12) + diffMonths;
-
+        const totalMonths = (currentDate.getFullYear() - joinDate.getFullYear()) * 12 + (currentDate.getMonth() - joinDate.getMonth());
         if (totalMonths < 6) {
             memberSinceIcon = paymentNotVerifiedIcon;
         } else if (totalMonths > 24) {
@@ -208,70 +203,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Logic for Avg Hourly Rate Icon and Display
     let avgRateIcon = '';
     let avgRateLabel = 'Avg Rate / Hours';
     let avgRateValue = 'N/A';
-    let numericRateForIcon = null;
 
     if (data.avgHourlyRate !== 'N/A') {
-        numericRateForIcon = parseFloat(data.avgHourlyRate.replace('$', ''));
         avgRateValue = `${data.avgHourlyRate} / ${data.totalHours}`;
-    } else if (data.clientHistory && data.clientHistory.length > 0) {
-        const fixedPrices = data.clientHistory
+        const rateValue = parseFloat(data.avgHourlyRate.replace('$', ''));
+        if (rateValue < 10) avgRateIcon = paymentNotVerifiedIcon;
+        else if (rateValue <= 15) avgRateIcon = proposalsWarningIcon;
+        else avgRateIcon = paymentVerifiedIcon;
+    } else {
+        avgRateLabel = 'Avg. Fixed-Price';
+        const fixedPriceJobs = (data.clientHistory || [])
             .map(item => {
                 if (item.jobPrice && item.jobPrice.toLowerCase().includes('fixed-price')) {
                     const match = item.jobPrice.match(/\$([\d,]+\.?\d*)/);
-                    if (match && match[1]) {
-                        return parseFloat(match[1].replace(/,/g, ''));
-                    }
+                    if (match && match[1]) return parseFloat(match[1].replace(/,/g, ''));
                 }
                 return null;
             })
             .filter(price => price !== null);
 
-        if (fixedPrices.length > 0) {
-            const sum = fixedPrices.reduce((acc, price) => acc + price, 0);
-            const averagePrice = sum / fixedPrices.length;
-            
-            numericRateForIcon = averagePrice; 
-            avgRateLabel = 'Avg. Fixed-Price';
+        if (fixedPriceJobs.length > 0) {
+            const averagePrice = fixedPriceJobs.reduce((a, b) => a + b, 0) / fixedPriceJobs.length;
             avgRateValue = `~$${averagePrice.toFixed(2)}`;
-        }
-    }
-
-    if (numericRateForIcon === null) {
-        avgRateIcon = paymentNotVerifiedIcon;
-    } else {
-        if (numericRateForIcon < 10) {
+            avgRateIcon = calculateClientQualityScore(data, icons);
+        } else {
+            avgRateValue = 'N/A';
             avgRateIcon = paymentNotVerifiedIcon;
-        } else if (numericRateForIcon >= 10 && numericRateForIcon <= 15) {
-            avgRateIcon = proposalsWarningIcon;
-        } else if (numericRateForIcon > 15) {
-            avgRateIcon = paymentVerifiedIcon;
         }
     }
 
     let jobAgeIcon = '';
     const jobAgeLowerCase = data.jobAge.toLowerCase();
-    if (
-        jobAgeLowerCase.includes('minute') ||
-        jobAgeLowerCase.includes('now') ||
-        jobAgeLowerCase.includes('1 hour')
-    ) {
+    if (jobAgeLowerCase.includes('minute') || jobAgeLowerCase.includes('now') || jobAgeLowerCase.includes('1 hour')) {
         jobAgeIcon = paymentVerifiedIcon;
     }
 
     let connectsIcon = '';
     const requiredConnectsValue = parseInt(data.requiredConnects);
     if (!isNaN(requiredConnectsValue)) {
-        if (requiredConnectsValue <= 15) {
-            connectsIcon = paymentVerifiedIcon;
-        } else if (requiredConnectsValue > 15 && requiredConnectsValue <= 22) {
-            connectsIcon = proposalsWarningIcon;
-        } else {
-            connectsIcon = paymentNotVerifiedIcon;
-        }
+        if (requiredConnectsValue <= 15) connectsIcon = paymentVerifiedIcon;
+        else if (requiredConnectsValue <= 22) connectsIcon = proposalsWarningIcon;
+        else connectsIcon = paymentNotVerifiedIcon;
     }
 
     analysisResultsDiv.innerHTML = `
@@ -315,6 +290,99 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `;
+  }
+
+  function parseDurationInDays(jobPriceString) {
+      if (!jobPriceString) return null;
+      jobPriceString = jobPriceString.toLowerCase();
+
+      let match = jobPriceString.match(/\((\d+)\s+months?\)/);
+      if (match && match[1]) return parseInt(match[1]) * 30;
+
+      match = jobPriceString.match(/(\d+)\s+months?/);
+      if (match && match[1]) return parseInt(match[1]) * 30;
+      
+      match = jobPriceString.match(/(\d+)\s+weeks?/);
+      if (match && match[1]) return parseInt(match[1]) * 7;
+
+      match = jobPriceString.match(/([a-z]{3})\s(\d{4})\s-\s([a-z]{3})\s(\d{4})/);
+      if (match) {
+          try {
+              const startDate = new Date(`${match[1]} 1, ${match[2]}`);
+              const endDate = new Date(`${match[3]} 1, ${match[4]}`);
+              endDate.setMonth(endDate.getMonth() + 1);
+              endDate.setDate(0); // Last day of the month
+              const diffTime = Math.abs(endDate - startDate);
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return diffDays > 0 ? diffDays : 30;
+          } catch (e) { return null; }
+      }
+      
+      return 14; // Default assumption for poorly defined durations
+  }
+
+  function calculateClientQualityScore(data, icons) {
+      const { paymentVerifiedIcon, proposalsWarningIcon, paymentNotVerifiedIcon } = icons;
+
+      let score_generosity = 0;
+      if (data.clientHistory && data.clientHistory.length > 0) {
+          const validJobs = data.clientHistory.map(item => {
+              if (item.jobPrice && item.jobPrice.toLowerCase().includes('fixed-price')) {
+                  const priceMatch = item.jobPrice.match(/\$([\d,]+\.?\d*)/);
+                  const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : null;
+                  const durationDays = parseDurationInDays(item.jobPrice);
+                  if (price && durationDays) return { price, durationDays };
+              }
+              return null;
+          }).filter(job => job !== null);
+
+          if (validJobs.length > 0) {
+              const totalSpent = validJobs.reduce((s, j) => s + j.price, 0);
+              const totalDays = validJobs.reduce((s, j) => s + j.durationDays, 0);
+              if (totalDays > 0) {
+                  const avgDailyRate = totalSpent / totalDays;
+                  const avgHourlyRate = avgDailyRate / 6;
+                  if (avgHourlyRate > 15) score_generosity = 1;
+                  else if (avgHourlyRate < 10) score_generosity = -1;
+              }
+          }
+      }
+
+      let score_professionalism = 0;
+      const rating = parseFloat(data.clientRating);
+      const reviewsMatch = data.clientReviewsCount.match(/(\d+)/);
+      const reviews = reviewsMatch ? parseInt(reviewsMatch[1]) : 0;
+      if (!isNaN(rating) && reviews > 0) {
+          if (rating >= 4.7 && reviews >= 10) score_professionalism = 1;
+          else if (rating >= 4.5 && reviews >= 5) score_professionalism = 0.5;
+          else if (rating < 4.0) score_professionalism = -1;
+          else if (rating < 4.5 && reviews < 5) score_professionalism = -0.5;
+      }
+
+      let score_behavior = 0;
+      const hireRate = parseInt(data.clientHireRate.replace('%', ''));
+      const jobsPosted = parseInt(data.clientJobsPosted);
+      const totalSpentVal = parseMoney(data.totalSpent);
+      if (!isNaN(hireRate) && !isNaN(jobsPosted)) {
+          if (hireRate > 85 && jobsPosted > 10) score_behavior = 1;
+          else if (hireRate > 60 && jobsPosted > 5) score_behavior = 0.5;
+          else if (hireRate < 50 && jobsPosted > 10) score_behavior = -1;
+      }
+      if (!isNaN(totalSpentVal) && !isNaN(jobsPosted) && totalSpentVal < 100 && jobsPosted > 5) {
+          score_behavior = -0.5;
+      }
+
+      let finalScore = (score_generosity * 0.5) + (score_professionalism * 0.3) + (score_behavior * 0.2);
+
+      const historyCount = data.clientHistory ? data.clientHistory.length : 0;
+      if (historyCount < 3 || reviews < 3) {
+          if (finalScore > 0.5) finalScore = 0.1;
+          if (finalScore < -0.5) finalScore = -0.1;
+      }
+
+      if (finalScore > 0.3) return paymentVerifiedIcon;
+      if (finalScore < -0.3) return paymentNotVerifiedIcon;
+      return proposalsWarningIcon;
   }
 
   function setupButtons(data) {
