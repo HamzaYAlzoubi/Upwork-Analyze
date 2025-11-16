@@ -208,17 +208,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Logic for Avg Hourly Rate Icon
+    // Logic for Avg Hourly Rate Icon and Display
     let avgRateIcon = '';
-    if (data.avgHourlyRate === 'N/A') {
+    let avgRateLabel = 'Avg Rate / Hours';
+    let avgRateValue = 'N/A';
+    let numericRateForIcon = null;
+
+    if (data.avgHourlyRate !== 'N/A') {
+        numericRateForIcon = parseFloat(data.avgHourlyRate.replace('$', ''));
+        avgRateValue = `${data.avgHourlyRate} / ${data.totalHours}`;
+    } else if (data.clientHistory && data.clientHistory.length > 0) {
+        const fixedPrices = data.clientHistory
+            .map(item => {
+                if (item.jobPrice && item.jobPrice.toLowerCase().includes('fixed-price')) {
+                    const match = item.jobPrice.match(/\$([\d,]+\.?\d*)/);
+                    if (match && match[1]) {
+                        return parseFloat(match[1].replace(/,/g, ''));
+                    }
+                }
+                return null;
+            })
+            .filter(price => price !== null);
+
+        if (fixedPrices.length > 0) {
+            const sum = fixedPrices.reduce((acc, price) => acc + price, 0);
+            const averagePrice = sum / fixedPrices.length;
+            
+            numericRateForIcon = averagePrice; 
+            avgRateLabel = 'Avg. Fixed-Price';
+            avgRateValue = `~$${averagePrice.toFixed(2)}`;
+        }
+    }
+
+    if (numericRateForIcon === null) {
         avgRateIcon = paymentNotVerifiedIcon;
     } else {
-        const rateValue = parseFloat(data.avgHourlyRate.replace('$', ''));
-        if (rateValue < 10) {
+        if (numericRateForIcon < 10) {
             avgRateIcon = paymentNotVerifiedIcon;
-        } else if (rateValue >= 10 && rateValue <= 15) {
+        } else if (numericRateForIcon >= 10 && numericRateForIcon <= 15) {
             avgRateIcon = proposalsWarningIcon;
-        } else if (rateValue > 15) {
+        } else if (numericRateForIcon > 15) {
             avgRateIcon = paymentVerifiedIcon;
         }
     }
@@ -233,6 +262,18 @@ document.addEventListener('DOMContentLoaded', () => {
         jobAgeIcon = paymentVerifiedIcon;
     }
 
+    let connectsIcon = '';
+    const requiredConnectsValue = parseInt(data.requiredConnects);
+    if (!isNaN(requiredConnectsValue)) {
+        if (requiredConnectsValue <= 15) {
+            connectsIcon = paymentVerifiedIcon;
+        } else if (requiredConnectsValue > 15 && requiredConnectsValue <= 22) {
+            connectsIcon = proposalsWarningIcon;
+        } else {
+            connectsIcon = paymentNotVerifiedIcon;
+        }
+    }
+
     analysisResultsDiv.innerHTML = `
       <div class="data-section">
         <h3>Job Details</h3>
@@ -241,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Type</dt><dd>${data.jobType}</dd>
           <dt>Budget / Rate</dt><dd>${data.budgetOrRate}</dd>
           <dt>Experience</dt><dd>${data.experienceLevel}</dd>
-          <dt>Connects</dt><dd>Required: ${data.requiredConnects} / Available: ${data.availableConnects}</dd>
+          <dt>Connects</dt><dd>Required: ${data.requiredConnects} / Available: ${data.availableConnects} ${connectsIcon}</dd>
           <dt class="separator" colspan="2"></dt>
           <dt>Posted</dt><dd>${data.jobAge} ${jobAgeIcon}</dd>
           <dt>Last Viewed</dt><dd>${data.lastViewed}</dd>
@@ -265,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Total Spent</dt><dd>${data.totalSpent} ${totalSpentIcon}</dd>
           <dt>Jobs Posted</dt><dd>${data.clientJobsPosted} ${jobsPostedIcon}</dd>
           <dt>Hire Rate</dt><dd>${data.clientHireRate} (${data.openJobs} open) ${hireRateIcon}</dd>
-          <dt>Avg Rate / Hours</dt><dd>${data.avgHourlyRate} / ${data.totalHours} ${avgRateIcon}</dd>
+          <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIcon}</dd>
           <dt>Member Since</dt><dd>${data.clientJoinDate} ${memberSinceIcon}</dd>
         </dl>
         <h4>Client Recent History (${data.clientHistory.length})</h4>

@@ -186,11 +186,18 @@ function extractJobData() {
         }
     }
 
+    const statsEl = item.querySelector('[data-cy="stats"]');
+    let jobPrice = 'N/A';
+    if (statsEl) {
+      jobPrice = statsEl.innerText.trim().replace(/\n/g, ' ');
+    }
+
     return {
       projectTitle,
       freelancerName,
       clientFeedback,
-      freelancerFeedback
+      freelancerFeedback,
+      jobPrice
     };
   });
 
