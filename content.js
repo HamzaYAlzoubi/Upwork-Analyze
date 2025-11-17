@@ -166,6 +166,8 @@ function extractJobData() {
       }
   }
 
+  const jobDeadline = getText('li:has([data-cy="calendar-time"]) strong');
+
   const recentHistoryItems = Array.from(document.querySelectorAll('[data-cy="job"].item'));
   const clientHistory = recentHistoryItems.map(item => {
     const projectTitle = getText('[data-cy="job-title"]', item);
@@ -226,6 +228,7 @@ function extractJobData() {
     clientReviewsCount,
     requiredConnects,
     availableConnects,
+    jobDeadline,
     clientHistory
   };
 }

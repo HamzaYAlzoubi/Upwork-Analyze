@@ -249,11 +249,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let connectsIcon = '';
+    let connectsTooltipText = '';
     const requiredConnectsValue = parseInt(data.requiredConnects);
     if (!isNaN(requiredConnectsValue)) {
-        if (requiredConnectsValue <= 15) connectsIcon = paymentVerifiedIcon;
-        else if (requiredConnectsValue <= 22) connectsIcon = proposalsWarningIcon;
-        else connectsIcon = paymentNotVerifiedIcon;
+        if (requiredConnectsValue <= 15) {
+            connectsIcon = paymentVerifiedIcon;
+            connectsTooltipText = 'عدد الاتصالات المطلوب لهذه الوظيفة منخفض ومناسب نوعًا ما.';
+        } else if (requiredConnectsValue <= 22) {
+            connectsIcon = proposalsWarningIcon;
+            connectsTooltipText = 'عدد الاتصالات المطلوب لهذه الوظيفة مرتفع قليلًا.';
+        } else {
+            connectsIcon = paymentNotVerifiedIcon;
+            connectsTooltipText = 'عدد الاتصالات المطلوب لهذه الوظيفة مرتفع للغاية.';
+        }
+    }
+    let connectsIconWithTooltip = '';
+    if (connectsIcon) {
+        connectsIconWithTooltip = `<span class="tooltip-container">${connectsIcon}<span class="tooltip-text">${connectsTooltipText}</span></span>`;
     }
 
     let lastViewedHtml = '';
@@ -261,169 +273,535 @@ document.addEventListener('DOMContentLoaded', () => {
         lastViewedHtml = `<dt>Last Viewed</dt><dd>${data.lastViewed}</dd>`;
     }
 
-    let budgetIcon = '';
-    let budgetTooltipText = '';
-    if (data.jobType.toLowerCase().includes('hourly')) {
-        let jobRate = 0;
-        const rateNumbers = data.budgetOrRate.match(/\d+\.?\d*/g);
-        if (rateNumbers) {
-            const rates = rateNumbers.map(n => parseFloat(n));
-            if (rates.length > 1) {
-                jobRate = (rates[0] + rates[1]) / 2; // Average of range
-            } else if (rates.length === 1) {
-                jobRate = rates[0];
+        let budgetIcon = '';
+
+        let budgetTooltipText = '';
+
+        if (data.jobType.toLowerCase().includes('hourly')) {
+
+            let jobRate = 0;
+
+            const rateNumbers = data.budgetOrRate.match(/\d+\.?\d*/g);
+
+            if (rateNumbers) {
+
+                const rates = rateNumbers.map(n => parseFloat(n));
+
+                if (rates.length > 1) {
+
+                    jobRate = (rates[0] + rates[1]) / 2; // Average of range
+
+                } else if (rates.length === 1) {
+
+                    jobRate = rates[0];
+
+                }
+
             }
-        }
 
-        if (jobRate > 0) { // Only apply icon if a valid rate was parsed
-            if (jobRate <= 15 && data.experienceLevel.toLowerCase().includes('expert')) {
-                budgetIcon = paymentNotVerifiedIcon;
-                budgetTooltipText = 'معدل منخفض لوظيفة تتطلب مستوى خبير.';
-            } else if (jobRate < 10) {
-                budgetIcon = paymentNotVerifiedIcon;
-                budgetTooltipText = 'يعتبر هذا المعدل للساعة منخفضًا.';
-            } else if (jobRate <= 15) {
-                budgetIcon = proposalsWarningIcon;
-                budgetTooltipText = 'يعتبر هذا المعدل للساعة متوسطًا.';
-            } else {
-                budgetIcon = paymentVerifiedIcon;
-                budgetTooltipText = 'يعتبر هذا المعدل للساعة تنافسيًا.';
+    
+
+            if (jobRate > 0) { // Only apply icon if a valid rate was parsed
+
+                const evalResult = getHourlyRateEvaluation(jobRate, data.experienceLevel, icons);
+
+                budgetIcon = evalResult.icon;
+
+                budgetTooltipText = evalResult.tooltip;
+
             }
-        }
-    } else if (data.jobType.toLowerCase().includes('fixed-price')) { // Logic for fixed-price job budget
-        budgetIcon = calculateClientQualityScore(data, icons);
-        budgetTooltipText = 'يتم تقييم هذه الميزانية بناءً على متوسط ما يدفعه العميل في وظائفه السابقة مقارنةً بمدة المشروع وتقييماته العامة.';
-    }
 
-    let budgetIconWithTooltip = '';
-    if (budgetIcon) {
-        budgetIconWithTooltip = `<span class="tooltip-container">${budgetIcon}<span class="tooltip-text">${budgetTooltipText}</span></span>`;
-    }
+            } else if (data.jobType.toLowerCase().includes('fixed-price')) { // Logic for fixed-price job budget
 
-    let invitesSentHtml = '';
-    if (data.invitesSent && parseInt(data.invitesSent) > 0) {
-        invitesSentHtml = `<dt>Invites Sent</dt><dd>${data.invitesSent}</dd>`;
-    }
+                const budgetResult = evaluateFixedPriceBudget(data, icons);
 
-    let hiresHtml = '';
-    if (data.hires && data.hires !== 'N/A') {
-        hiresHtml = `<dt>Hires</dt><dd>${data.hires} ${parseInt(data.hires) > 0 ? paymentNotVerifiedIcon : ''}</dd>`;
-    }
+                budgetIcon = budgetResult.icon;
 
-    let experienceIcon = '';
-    let experienceTooltipText = '';
-    const userExperience = localStorage.getItem('userExperienceLevel');
-    const jobExperience = data.experienceLevel.toLowerCase();
+                budgetTooltipText = budgetResult.tooltip;
 
-    if (userExperience) {
-        if (userExperience === 'Entry') {
-            if (jobExperience.includes('expert')) {
-                experienceIcon = paymentNotVerifiedIcon;
-                experienceTooltipText = 'مستوى خبرتك (مبتدئ) أقل بكثير من المطلوب (خبير).';
-            } else if (jobExperience.includes('intermediate')) {
-                experienceIcon = proposalsWarningIcon;
-                experienceTooltipText = 'مستوى خبرتك (مبتدئ) أقل من المطلوب (متوسط).';
-            } else { // Entry level
-                experienceIcon = paymentVerifiedIcon;
-                experienceTooltipText = 'مستوى خبرتك (مبتدئ) يتطابق مع المطلوب.';
             }
-        } else if (userExperience === 'Intermediate') {
-            if (jobExperience.includes('expert')) {
-                experienceIcon = proposalsWarningIcon;
-                experienceTooltipText = 'مستوى خبرتك (متوسط) أقل من المطلوب (خبير).';
-            } else if (jobExperience.includes('intermediate')) { // Intermediate matches Intermediate
-                experienceIcon = paymentVerifiedIcon;
-                experienceTooltipText = 'مستوى خبرتك (متوسط) يتطابق مع المطلوب.';
-            } else { // Intermediate exceeds Entry
-                experienceIcon = paymentVerifiedIcon;
-                experienceTooltipText = 'مستوى خبرتك (متوسط) يتجاوز المطلوب (مبتدئ).';
+
+        
+
+            let budgetIconWithTooltip = '';
+
+            if (budgetIcon) {
+
+                budgetIconWithTooltip = `<span class="tooltip-container">${budgetIcon}<span class="tooltip-text">${budgetTooltipText}</span></span>`;
+
             }
-        } else if (userExperience === 'Expert') {
-            if (jobExperience.includes('expert')) { // Expert matches Expert
-                experienceIcon = paymentVerifiedIcon;
-                experienceTooltipText = 'مستوى خبرتك (خبير) يتطابق مع المطلوب.';
-            } else { // Expert exceeds Intermediate or Entry
-                experienceIcon = paymentVerifiedIcon;
-                experienceTooltipText = 'مستوى خبرتك (خبير) يتجاوز المطلوب.';
+
+        
+
+            let invitesSentHtml = '';
+
+            if (data.invitesSent && parseInt(data.invitesSent) > 0) {
+
+                invitesSentHtml = `<dt>Invites Sent</dt><dd>${data.invitesSent}</dd>`;
+
             }
-        }
-    }
 
-    let experienceIconWithTooltip = '';
-    if (experienceIcon) {
-        experienceIconWithTooltip = `<span class="tooltip-container">${experienceIcon}<span class="tooltip-text">${experienceTooltipText}</span></span>`;
-    }
+        
 
-    analysisResultsDiv.innerHTML = `
-      <div class="data-section">
-        <h3>Job Details</h3>
-        <dl>
-          <dt>Title</dt><dd>${data.jobTitle}</dd>
-          <dt>Type</dt><dd>${data.jobType}</dd>
-          <dt>Budget / Rate</dt><dd>${data.budgetOrRate} ${budgetIconWithTooltip}</dd>
-          <dt>Experience</dt><dd>${data.experienceLevel} ${experienceIconWithTooltip}</dd>
-          <dt>Connects</dt><dd>Required: ${data.requiredConnects} / Available: ${data.availableConnects} ${connectsIcon}</dd>
-          <dt class="separator" colspan="2"></dt>
-          <dt>Posted</dt><dd>${data.jobAge} ${jobAgeIcon}</dd>
-          ${lastViewedHtml}
-          <dt>Proposals</dt><dd>${data.proposalsCount} ${proposalsIcon}</dd>
-          <dt>Interviewing</dt><dd>${data.interviewing}</dd>
-          ${invitesSentHtml}
-          ${hiresHtml}
-        </dl>
-        <h4>Full Job Description</h4>
-        <div class="description-box">
-          <p id="full-description">${data.fullJobDescription}</p>
-        </div>
-      </div>
+            let hiresHtml = '';
 
-      <div class="data-section">
-        <h3>Client Details</h3>
-        <dl>
-          <dt>Payment Verified</dt><dd>${data.paymentVerified === 'Yes' ? paymentVerifiedIcon : paymentNotVerifiedIcon} ${data.paymentVerified}</dd>
-          <dt>Rating</dt><dd>${starRating} ${data.clientRating} (${data.clientReviewsCount}) ${clientRatingIcon}</dd>
-          <dt>Location</dt><dd>${data.clientLocation}</dd>
-          <dt>Total Spent</dt><dd>${data.totalSpent} ${totalSpentIcon}</dd>
-          <dt>Jobs Posted</dt><dd>${data.clientJobsPosted} ${jobsPostedIcon}</dd>
-          <dt>Hire Rate</dt><dd>${data.clientHireRate} (${data.openJobs} open) ${hireRateIcon}</dd>
-          <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIcon}</dd>
-          <dt>Member Since</dt><dd>${data.clientJoinDate} ${memberSinceIcon}</dd>
-        </dl>
-        <h4>Client Recent History (${data.clientHistory.length})</h4>
-        <div class="history-container">
-          ${historyHtml || '<p>No recent history found.</p>'}
-        </div>
-      </div>
-    `;
-  }
-  function parseDurationInDays(jobPriceString) {
-      if (!jobPriceString) return null;
-      jobPriceString = jobPriceString.toLowerCase();
+            if (data.hires && data.hires !== 'N/A') {
 
-      let match = jobPriceString.match(/\((\d+)\s+months?\)/);
-      if (match && match[1]) return parseInt(match[1]) * 30;
+                hiresHtml = `<dt>Hires</dt><dd>${data.hires} ${parseInt(data.hires) > 0 ? paymentNotVerifiedIcon : ''}</dd>`;
 
-      match = jobPriceString.match(/(\d+)\s+months?/);
-      if (match && match[1]) return parseInt(match[1]) * 30;
-      
-      match = jobPriceString.match(/(\d+)\s+weeks?/);
-      if (match && match[1]) return parseInt(match[1]) * 7;
+            }
 
-      match = jobPriceString.match(/([a-z]{3})\s(\d{4})\s-\s([a-z]{3})\s(\d{4})/);
-      if (match) {
-          try {
-              const startDate = new Date(`${match[1]} 1, ${match[2]}`);
-              const endDate = new Date(`${match[3]} 1, ${match[4]}`);
-              endDate.setMonth(endDate.getMonth() + 1);
-              endDate.setDate(0); // Last day of the month
-              const diffTime = Math.abs(endDate - startDate);
-              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-              return diffDays > 0 ? diffDays : 30;
-          } catch (e) { return null; }
-      }
-      
-      return 14; // Default assumption for poorly defined durations
-  }
+        
+
+            let experienceIcon = '';
+
+            let experienceTooltipText = '';
+
+            const userExperience = localStorage.getItem('userExperienceLevel');
+
+            const jobExperience = data.experienceLevel.toLowerCase();
+
+        
+
+            if (userExperience) {
+
+                if (userExperience === 'Entry') {
+
+                    if (jobExperience.includes('expert')) {
+
+                        experienceIcon = paymentNotVerifiedIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (مبتدئ) أقل بكثير من المطلوب (خبير).';
+
+                    } else if (jobExperience.includes('intermediate')) {
+
+                        experienceIcon = proposalsWarningIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (مبتدئ) أقل من المطلوب (متوسط).';
+
+                    } else { // Entry level
+
+                        experienceIcon = paymentVerifiedIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (مبتدئ) يتطابق مع المطلوب.';
+
+                    }
+
+                } else if (userExperience === 'Intermediate') {
+
+                    if (jobExperience.includes('expert')) {
+
+                        experienceIcon = proposalsWarningIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (متوسط) أقل من المطلوب (خبير).';
+
+                    } else if (jobExperience.includes('intermediate')) { // Intermediate matches Intermediate
+
+                        experienceIcon = paymentVerifiedIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (متوسط) يتطابق مع المطلوب.';
+
+                    } else { // Intermediate exceeds Entry
+
+                        experienceIcon = paymentVerifiedIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (متوسط) يتجاوز المطلوب (مبتدئ).';
+
+                    }
+
+                } else if (userExperience === 'Expert') {
+
+                    if (jobExperience.includes('expert')) { // Expert matches Expert
+
+                        experienceIcon = paymentVerifiedIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (خبير) يتطابق مع المطلوب.';
+
+                    } else { // Expert exceeds Intermediate or Entry
+
+                        experienceIcon = paymentVerifiedIcon;
+
+                        experienceTooltipText = 'مستوى خبرتك (خبير) يتجاوز المطلوب.';
+
+                    }
+
+                }
+
+            }
+
+        
+
+            let experienceIconWithTooltip = '';
+
+            if (experienceIcon) {
+
+                experienceIconWithTooltip = `<span class="tooltip-container">${experienceIcon}<span class="tooltip-text">${experienceTooltipText}</span></span>`;
+
+            }
+
+        
+
+            analysisResultsDiv.innerHTML = `
+
+              <div class="data-section">
+
+                <h3>Job Details</h3>
+
+                <dl>
+
+                  <dt>Title</dt><dd>${data.jobTitle}</dd>
+
+                  <dt>Type</dt><dd>${data.jobType}</dd>
+
+                  <dt>Budget / Rate</dt><dd>${data.budgetOrRate} ${budgetIconWithTooltip}</dd>
+
+                  <dt>Experience</dt><dd>${data.experienceLevel} ${experienceIconWithTooltip}</dd>
+
+                  <dt>Connects</dt><dd>Required: ${data.requiredConnects} / Available: ${data.availableConnects} ${connectsIconWithTooltip}</dd>
+
+                  <dt class="separator" colspan="2"></dt>
+
+                  <dt>Posted</dt><dd>${data.jobAge} ${jobAgeIcon}</dd>
+
+                  ${lastViewedHtml}
+
+                  <dt>Proposals</dt><dd>${data.proposalsCount} ${proposalsIcon}</dd>
+
+                  <dt>Interviewing</dt><dd>${data.interviewing}</dd>
+
+                  ${invitesSentHtml}
+
+                  ${hiresHtml}
+
+                </dl>
+
+                <h4>Full Job Description</h4>
+
+                <div class="description-box">
+
+                  <p id="full-description">${data.fullJobDescription}</p>
+
+                </div>
+
+              </div>
+
+        
+
+              <div class="data-section">
+
+                <h3>Client Details</h3>
+
+                <dl>
+
+                  <dt>Payment Verified</dt><dd>${data.paymentVerified === 'Yes' ? paymentVerifiedIcon : paymentNotVerifiedIcon} ${data.paymentVerified}</dd>
+
+                  <dt>Rating</dt><dd>${starRating} ${data.clientRating} (${data.clientReviewsCount}) ${clientRatingIcon}</dd>
+
+                  <dt>Location</dt><dd>${data.clientLocation}</dd>
+
+                  <dt>Total Spent</dt><dd>${data.totalSpent} ${totalSpentIcon}</dd>
+
+                  <dt>Jobs Posted</dt><dd>${data.clientJobsPosted} ${jobsPostedIcon}</dd>
+
+                  <dt>Hire Rate</dt><dd>${data.clientHireRate} (${data.openJobs} open) ${hireRateIcon}</dd>
+
+                  <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIcon}</dd>
+
+                  <dt>Member Since</dt><dd>${data.clientJoinDate} ${memberSinceIcon}</dd>
+
+                </dl>
+
+                <h4>Client Recent History (${data.clientHistory.length})</h4>
+
+                <div class="history-container">
+
+                  ${historyHtml || '<p>No recent history found.</p>'}
+
+                </div>
+
+              </div>
+
+            `;
+
+          }
+
+        
+
+            function evaluateFixedPriceBudget(data, icons) {
+
+        
+
+              // --- Primary Check: Deadline ---
+
+        
+
+              if (data.jobDeadline && data.jobDeadline !== 'N/A') {
+
+        
+
+                  let durationDays = 0;
+
+        
+
+                  try {
+
+        
+
+                      const deadlineDate = new Date(data.jobDeadline);
+
+        
+
+                      const today = new Date();
+
+        
+
+                      deadlineDate.setHours(0, 0, 0, 0);
+
+        
+
+                      today.setHours(0, 0, 0, 0);
+
+        
+
+                      const diffTime = deadlineDate - today;
+
+        
+
+                      durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        
+
+                  } catch (e) {
+
+        
+
+                      // Invalid date format, proceed to next check
+
+        
+
+                  }
+
+        
+
+          
+
+        
+
+                  if (durationDays > 0) {
+
+        
+
+                      // Estimate daily hours
+
+        
+
+                      let dailyHours = 5; // Default
+
+        
+
+                      const description = data.fullJobDescription.toLowerCase();
+
+        
+
+                      if (description.includes('full-time') || description.includes('40 hours/week')) {
+
+        
+
+                          dailyHours = 8;
+
+        
+
+                      } else if (description.includes('part-time') || description.includes('20 hours/week')) {
+
+        
+
+                          dailyHours = 4;
+
+        
+
+                      }
+
+        
+
+          
+
+        
+
+                      const totalHours = durationDays * dailyHours;
+
+        
+
+                      const actualBudget = parseMoney(data.budgetOrRate);
+
+        
+
+          
+
+        
+
+                      if (totalHours > 0) {
+
+        
+
+                          const impliedRate = actualBudget / totalHours;
+
+        
+
+                          const evalResult = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
+
+        
+
+                          
+
+        
+
+                          let specificTooltip = '';
+
+        
+
+                          if (evalResult.icon === icons.paymentVerifiedIcon) {
+
+        
+
+                              specificTooltip = 'الميزانية المحددة لهذه الوظيفة ممتازة مقارنة بموعد التسليم.';
+
+        
+
+                          } else if (evalResult.icon === icons.proposalsWarningIcon) {
+
+        
+
+                              specificTooltip = 'الميزانية المحددة لهذه الوظيفة مقبولة مقارنة بموعد التسليم.';
+
+        
+
+                          } else if (evalResult.icon === icons.paymentNotVerifiedIcon) {
+
+        
+
+                              specificTooltip = 'الميزانية المحددة لهذه الوظيفة منخفضة مقارنة بموعد التسليم.';
+
+        
+
+                          }
+
+        
+
+                          return { icon: evalResult.icon, tooltip: specificTooltip || evalResult.tooltip };
+
+        
+
+                      }
+
+        
+
+                  }
+
+        
+
+              }
+
+        
+
+          
+
+        
+
+              // --- Secondary Check: High Budget ---
+
+        
+
+              const actualBudget = parseMoney(data.budgetOrRate);
+
+        
+
+              if (actualBudget >= 1000) {
+
+        
+
+                  return {
+
+        
+
+                      icon: icons.paymentVerifiedIcon,
+
+        
+
+                      tooltip: 'سعر الوظيفة مرتفع وممتاز، ولكن تأكد من المدة الزمنية للمشروع'
+
+        
+
+                  };
+
+        
+
+              }
+
+        
+
+          
+
+        
+
+              // If all checks fail, do nothing.
+
+        
+
+              return { icon: '', tooltip: '' };
+
+        
+
+            }
+
+        
+
+          function getHourlyRateEvaluation(rate, experienceLevel, icons) {
+
+            const { paymentVerifiedIcon, proposalsWarningIcon, paymentNotVerifiedIcon } = icons;
+
+            let icon = '';
+
+            let tooltip = '';
+
+        
+
+            if (rate <= 15 && experienceLevel.toLowerCase().includes('expert')) {
+
+                icon = paymentNotVerifiedIcon;
+
+                tooltip = 'معدل منخفض لوظيفة تتطلب مستوى خبير.';
+
+            } else if (rate < 10) {
+
+                icon = paymentNotVerifiedIcon;
+
+                tooltip = 'يعتبر هذا المعدل للساعة منخفضًا جدًا.';
+
+            } else if (rate <= 15) {
+
+                icon = proposalsWarningIcon;
+
+                tooltip = 'يعتبر هذا المعدل للساعة متوسطًا.';
+
+            } else if (rate >= 30) {
+
+                icon = paymentVerifiedIcon;
+
+                tooltip = 'يعتبر هذا المعدل للساعة ممتازًا للغاية.';
+
+            } else { // rate > 15 and rate < 30
+
+                icon = paymentVerifiedIcon;
+
+                tooltip = 'يعتبر هذا المعدل للساعة جيدًا.';
+
+            }
+
+            return { icon, tooltip };
+
+          }
+
+
 
   function calculateClientQualityScore(data, icons) {
       const { paymentVerifiedIcon, proposalsWarningIcon, paymentNotVerifiedIcon } = icons;
@@ -431,6 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let score_generosity = 0;
       if (data.clientHistory && data.clientHistory.length > 0) {
           const validJobs = data.clientHistory.map(item => {
+
               if (item.jobPrice && item.jobPrice.toLowerCase().includes('fixed-price')) {
                   const priceMatch = item.jobPrice.match(/\$([\d,]+\.?\d*)/);
                   const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : null;

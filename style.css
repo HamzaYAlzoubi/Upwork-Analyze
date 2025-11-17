@@ -302,8 +302,7 @@ dd {
   position: absolute;
   z-index: 1;
   bottom: 125%; /* Position the tooltip above the icon */
-  left: 50%;
-  margin-left: -80px; /* Use half of the width to center the tooltip */
+  right: 0; /* Align to the right edge of the container */
   opacity: 0;
   transition: opacity 0.3s;
   font-size: 12px;
@@ -313,7 +312,7 @@ dd {
   content: "";
   position: absolute;
   top: 100%;
-  left: 50%;
+  right: 15px; /* Position arrow near the right edge */
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
