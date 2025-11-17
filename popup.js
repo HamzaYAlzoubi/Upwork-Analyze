@@ -155,19 +155,36 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentVerifiedIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">طريقة الدفع غير موثقة لدى موقع Upwork. قد يزيد من مخاطر عدم الدفع.</span></span>`;
     }
 
-    let clientRatingIcon = '';
+    let clientRatingIconWithTooltip = '';
     if (data.rating === 'N/A') {
-        clientRatingIcon = paymentNotVerifiedIcon;
+        clientRatingIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">لا يوجد تقييم للعميل. كن حذرًا.</span></span>`;
     } else {
         const ratingValue = parseFloat(data.rating);
         const reviewsCountMatch = (data.reviewsCount || '').match(/(\d+)/);
         const reviewsCount = reviewsCountMatch ? parseInt(reviewsCountMatch[1]) : 0;
-        if (ratingValue >= 4.5 && reviewsCount >= 3) {
-            clientRatingIcon = paymentVerifiedIcon;
-        } else if (ratingValue >= 4.1 && ratingValue <= 4.4) {
-            clientRatingIcon = proposalsWarningIcon;
+        let icon = '';
+        let tooltipText = '';
+        const readReviewsAdvice = ' نصيحة: اقرأ المراجعات دائمًا قبل التقديم.';
+
+        if (ratingValue === 5 && reviewsCount > 35) {
+            icon = paymentVerifiedIcon;
+            tooltipText = 'عميل مثالي بتقييم 5 نجوم وعدد كبير من المراجعات. فرصة ذهبية للعمل معه!';
+        } else if (ratingValue === 5 && reviewsCount <= 35) {
+            icon = paymentVerifiedIcon;
+            tooltipText = 'تقييم العميل ممتاز ولديه عدد كافٍ من المراجعات. مؤشر إيجابي للغاية.';
+        } else if (ratingValue >= 4.5 && ratingValue < 5) {
+            icon = paymentVerifiedIcon;
+            tooltipText = 'تقييم العميل جيد جدًا، لكنه ليس مثاليًا.' + readReviewsAdvice;
+        } else if (ratingValue >= 4.1 && ratingValue < 4.5) {
+            icon = proposalsWarningIcon;
+            tooltipText = 'العميل لديه مراجعات سيئة سابقة. قدم فقط إذا كنت تعرف ما تفعل وبحذر شديد.' + readReviewsAdvice;
         } else if (ratingValue < 4.1) {
-            clientRatingIcon = paymentNotVerifiedIcon;
+            icon = paymentNotVerifiedIcon;
+            tooltipText = 'تقييم العميل منخفض جدًا. يمثل مخاطرة عالية. لا تقدم إلا للضرورة القصوى.' + readReviewsAdvice;
+        }
+        
+        if (icon) {
+            clientRatingIconWithTooltip = `<span class="tooltip-container">${icon}<span class="tooltip-text">${tooltipText}</span></span>`;
         }
     }
 
@@ -469,7 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <h3>Client Details</h3>
         <dl>
           <dt>Payment Verified</dt><dd>${paymentVerifiedIconWithTooltip} ${data.paymentVerified}</dd>
-          <dt>Rating</dt><dd>${starRating} ${data.rating} (${data.reviewsCount}) ${clientRatingIcon}</dd>
+          <dt>Rating</dt><dd>${starRating} ${data.rating} (${data.reviewsCount}) ${clientRatingIconWithTooltip}</dd>
           <dt>Location</dt><dd>${data.location || 'N/A'}</dd>
           <dt>Total Spent</dt><dd>${data.totalSpent || 'N/A'} ${totalSpentIcon}</dd>
           <dt>Jobs Posted</dt><dd>${data.jobsPosted || 'N/A'} ${jobsPostedIcon}</dd>
