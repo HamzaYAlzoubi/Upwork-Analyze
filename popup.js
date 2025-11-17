@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fixedPriceJobs.length > 0) {
             const averagePrice = fixedPriceJobs.reduce((a, b) => a + b, 0) / fixedPriceJobs.length;
             avgRateValue = `~$${averagePrice.toFixed(2)}`;
-            avgRateIcon = calculateClientQualityScore(data, icons); // Now returns just the icon string
+            avgRateIcon = proposalsWarningIcon; // Use a neutral icon as quality score is deprecated
         } else {
             avgRateValue = 'N/A';
             avgRateIcon = paymentNotVerifiedIcon;
@@ -535,151 +535,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-              if (data.jobDeadline && data.jobDeadline !== 'N/A') {
+                  if (data.jobDeadline && data.jobDeadline !== 'N/A') {
 
         
 
-                  let durationDays = 0;
+                      let durationDays = 0;
 
         
 
-                  try {
+                      try {
 
         
 
-                      const deadlineDate = new Date(data.jobDeadline);
+                          const deadlineDate = new Date(data.jobDeadline);
 
         
 
-                      const today = new Date();
+                          const today = new Date();
 
         
 
-                      deadlineDate.setHours(0, 0, 0, 0);
+                          deadlineDate.setHours(0, 0, 0, 0);
 
         
 
-                      today.setHours(0, 0, 0, 0);
+                          today.setHours(0, 0, 0, 0);
 
         
 
-                      const diffTime = deadlineDate - today;
+                          const diffTime = deadlineDate - today;
 
         
 
-                      durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         
 
-                  } catch (e) {
+                          if (durationDays <= 0) {
 
         
 
-                      // Invalid date format, proceed to next check
-
-        
-
-                  }
-
-        
-
-          
-
-        
-
-                  if (durationDays > 0) {
-
-        
-
-                      // Estimate daily hours
-
-        
-
-                      let dailyHours = 5; // Default
-
-        
-
-                      const description = data.fullJobDescription.toLowerCase();
-
-        
-
-                      if (description.includes('full-time') || description.includes('40 hours/week')) {
-
-        
-
-                          dailyHours = 8;
-
-        
-
-                      } else if (description.includes('part-time') || description.includes('20 hours/week')) {
-
-        
-
-                          dailyHours = 4;
-
-        
-
-                      }
-
-        
-
-          
-
-        
-
-                      const totalHours = durationDays * dailyHours;
-
-        
-
-                      const actualBudget = parseMoney(data.budgetOrRate);
-
-        
-
-          
-
-        
-
-                      if (totalHours > 0) {
-
-        
-
-                          const impliedRate = actualBudget / totalHours;
-
-        
-
-                          const evalResult = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
-
-        
-
-                          
-
-        
-
-                          let specificTooltip = '';
-
-        
-
-                          if (evalResult.icon === icons.paymentVerifiedIcon) {
-
-        
-
-                              specificTooltip = 'الميزانية المحددة لهذه الوظيفة ممتازة مقارنة بموعد التسليم.';
-
-        
-
-                          } else if (evalResult.icon === icons.proposalsWarningIcon) {
-
-        
-
-                              specificTooltip = 'الميزانية المحددة لهذه الوظيفة مقبولة مقارنة بموعد التسليم.';
-
-        
-
-                          } else if (evalResult.icon === icons.paymentNotVerifiedIcon) {
-
-        
-
-                              specificTooltip = 'الميزانية المحددة لهذه الوظيفة منخفضة مقارنة بموعد التسليم.';
+                              durationDays = 1; // If due today or in the past, treat as a 1-day project.
 
         
 
@@ -687,7 +583,127 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-                          return { icon: evalResult.icon, tooltip: specificTooltip || evalResult.tooltip };
+                      } catch (e) {
+
+        
+
+                          durationDays = 0; // On error, ensure we don't proceed with this check.
+
+        
+
+                      }
+
+        
+
+              
+
+        
+
+                      if (durationDays > 0) {
+
+        
+
+                          // Estimate daily hours
+
+        
+
+                          let dailyHours = 5; // Default
+
+        
+
+                          const description = data.fullJobDescription.toLowerCase();
+
+        
+
+                          if (description.includes('full-time') || description.includes('40 hours/week')) {
+
+        
+
+                              dailyHours = 8;
+
+        
+
+                          } else if (description.includes('part-time') || description.includes('20 hours/week')) {
+
+        
+
+                              dailyHours = 4;
+
+        
+
+                          }
+
+        
+
+              
+
+        
+
+                          const totalHours = durationDays * dailyHours;
+
+        
+
+                          const actualBudget = parseMoney(data.budgetOrRate);
+
+        
+
+              
+
+        
+
+                          if (totalHours > 0) {
+
+        
+
+                              const impliedRate = actualBudget / totalHours;
+
+        
+
+                              const evalResult = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
+
+        
+
+                              
+
+        
+
+                              let specificTooltip = '';
+
+        
+
+                              if (evalResult.icon === icons.paymentVerifiedIcon) {
+
+        
+
+                                  specificTooltip = 'الميزانية المحددة لهذه الوظيفة ممتازة مقارنة بموعد التسليم.';
+
+        
+
+                              } else if (evalResult.icon === icons.proposalsWarningIcon) {
+
+        
+
+                                  specificTooltip = 'الميزانية المحددة لهذه الوظيفة مقبولة مقارنة بموعد التسليم.';
+
+        
+
+                              } else if (evalResult.icon === icons.paymentNotVerifiedIcon) {
+
+        
+
+                                  specificTooltip = 'الميزانية المحددة لهذه الوظيفة منخفضة مقارنة بموعد التسليم.';
+
+        
+
+                              }
+
+        
+
+                              return { icon: evalResult.icon, tooltip: specificTooltip || evalResult.tooltip };
+
+        
+
+                          }
 
         
 
@@ -696,10 +712,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
 
                   }
-
-        
-
-              }
 
         
 
@@ -803,72 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  function calculateClientQualityScore(data, icons) {
-      const { paymentVerifiedIcon, proposalsWarningIcon, paymentNotVerifiedIcon } = icons;
 
-      let score_generosity = 0;
-      if (data.clientHistory && data.clientHistory.length > 0) {
-          const validJobs = data.clientHistory.map(item => {
-
-              if (item.jobPrice && item.jobPrice.toLowerCase().includes('fixed-price')) {
-                  const priceMatch = item.jobPrice.match(/\$([\d,]+\.?\d*)/);
-                  const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : null;
-                  const durationDays = parseDurationInDays(item.jobPrice);
-                  if (price && durationDays) return { price, durationDays };
-              }
-              return null;
-          }).filter(job => job !== null);
-
-          if (validJobs.length > 0) {
-              const totalSpent = validJobs.reduce((s, j) => s + j.price, 0);
-              const totalDays = validJobs.reduce((s, j) => s + j.durationDays, 0);
-              if (totalDays > 0) {
-                  const avgDailyRate = totalSpent / totalDays;
-                  const avgHourlyRate = avgDailyRate / 6;
-                  if (avgHourlyRate > 15) score_generosity = 1;
-                  else if (avgHourlyRate < 10) score_generosity = -1;
-              }
-          }
-      }
-
-      let score_professionalism = 0;
-      const rating = parseFloat(data.clientRating);
-      const reviewsMatch = data.clientReviewsCount.match(/(\d+)/);
-      const reviews = reviewsMatch ? parseInt(reviewsMatch[1]) : 0;
-      if (!isNaN(rating) && reviews > 0) {
-          if (rating >= 4.7 && reviews >= 10) score_professionalism = 1;
-          else if (rating >= 4.5 && reviews >= 5) score_professionalism = 0.5;
-          else if (rating < 4.0) score_professionalism = -1;
-          else if (rating < 4.5 && reviews < 5) score_professionalism = -0.5;
-      }
-
-      let score_behavior = 0;
-      const hireRate = parseInt(data.clientHireRate.replace('%', ''));
-      const jobsPosted = parseInt(data.clientJobsPosted);
-      const totalSpentVal = parseMoney(data.totalSpent);
-      if (!isNaN(hireRate) && !isNaN(jobsPosted)) {
-          if (hireRate > 85 && jobsPosted > 10) score_behavior = 1;
-          else if (hireRate > 60 && jobsPosted > 5) score_behavior = 0.5;
-          else if (hireRate < 50 && jobsPosted > 10) score_behavior = -1;
-      }
-      if (!isNaN(totalSpentVal) && !isNaN(jobsPosted) && totalSpentVal < 100 && jobsPosted > 5) {
-          score_behavior = -0.5;
-      }
-
-      let finalScore = (score_generosity * 0.5) + (score_professionalism * 0.3) + (score_behavior * 0.2);
-      let confidenceAdjusted = false;
-
-      const historyCount = data.clientHistory ? data.clientHistory.length : 0;
-      if (historyCount < 3 || reviews < 3) {
-          if (finalScore > 0.5) finalScore = 0.1;
-          if (finalScore < -0.5) finalScore = -0.1;
-          confidenceAdjusted = true;
-      }
-
-      if (finalScore > 0.3) return paymentVerifiedIcon;
-      if (finalScore < -0.3) return paymentNotVerifiedIcon;
-      return proposalsWarningIcon;
-  }
 
   function setupButtons(data) {
     const copyBtn = document.getElementById('copy-all-btn');
