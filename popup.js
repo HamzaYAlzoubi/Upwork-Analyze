@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         jobsPostedTooltipText = 'العميل ينشر وظائف قليلة لكنه جاد جدًا في التوظيف عند النشر. فرصة جيدة إذا كانت الوظيفة تناسبك تمامًا.';
     } else if (jobsPostedValue <= 5 && hireRateValue < 90) {
         jobsPostedIcon = paymentNotVerifiedIcon;
-        jobsPostedTooltipText = 'نشر عددًا قليلًا جدًا من الوظائف ولا يبدو أنه يوظف بانتظام. تقدم بحذر شديد.';
+        jobsPostedTooltipText = 'نشر عددًا قليلًا جدًا من الوظائف ولا يبدو أنه يوظف بانتظام.';
     }
     // For other cases, jobsPostedIcon remains empty, meaning no icon will be displayed.
 
