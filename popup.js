@@ -148,6 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const starRating = generateStars(parseFloat(data.rating));
 
+    let paymentVerifiedIconWithTooltip = '';
+    if (data.paymentVerified === 'Yes') {
+        paymentVerifiedIconWithTooltip = `<span class="tooltip-container">${paymentVerifiedIcon}<span class="tooltip-text">طريقة الدفع موثقة لدى موقع Upwork. يقلل من مخاطر عدم الدفع.</span></span>`;
+    } else {
+        paymentVerifiedIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">طريقة الدفع غير موثقة لدى موقع Upwork. قد يزيد من مخاطر عدم الدفع.</span></span>`;
+    }
+
     let clientRatingIcon = '';
     if (data.rating === 'N/A') {
         clientRatingIcon = paymentNotVerifiedIcon;
@@ -354,11 +361,16 @@ document.addEventListener('DOMContentLoaded', () => {
         invitesSentHtml = `<dt>Invites Sent</dt><dd>${data.invitesSent} ${invitesSentIconWithTooltip}</dd>`;
     }
 
-    let hiresHtml = '';
-    if (data.hires && data.hires !== 'N/A') {
-        hiresHtml = `<dt>Hires</dt><dd>${data.hires} ${parseInt(data.hires) > 0 ? paymentNotVerifiedIcon : ''}</dd>`;
-    }
-
+                    let hiresHtml = '';
+                    if (data.hires && data.hires !== 'N/A' && parseInt(data.hires) > 0) {
+                        const hiresCount = parseInt(data.hires);
+                        const tooltipText = 'انتهى الأمر. تم توظيف شخص بالفعل لهذه الوظيفة. لا تقدم واذهب للبحث عن وظيفة أخرى.';
+                        const hiresIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">${tooltipText}</span></span>`;
+                        hiresHtml = `<dt>Hires</dt><dd>${hiresCount} ${hiresIconWithTooltip}</dd>`;
+                    } else if (data.hires && data.hires !== 'N/A') {
+                        // Handles the case where Hires is 0
+                        hiresHtml = `<dt>Hires</dt><dd>${data.hires}</dd>`;
+                    }
     let experienceIcon = '';
     let experienceTooltipText = '';
     const jobExperience = (data.experienceLevel || '').toLowerCase();
@@ -456,7 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="data-section">
         <h3>Client Details</h3>
         <dl>
-          <dt>Payment Verified</dt><dd>${data.paymentVerified === 'Yes' ? paymentVerifiedIcon : paymentNotVerifiedIcon} ${data.paymentVerified}</dd>
+          <dt>Payment Verified</dt><dd>${paymentVerifiedIconWithTooltip} ${data.paymentVerified}</dd>
           <dt>Rating</dt><dd>${starRating} ${data.rating} (${data.reviewsCount}) ${clientRatingIcon}</dd>
           <dt>Location</dt><dd>${data.location || 'N/A'}</dd>
           <dt>Total Spent</dt><dd>${data.totalSpent || 'N/A'} ${totalSpentIcon}</dd>
