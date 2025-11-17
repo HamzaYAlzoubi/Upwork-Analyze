@@ -204,16 +204,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let memberSinceIcon = '';
+    let memberSinceIconWithTooltip = '';
     if (data.memberSince && data.memberSince !== 'N/A') {
         const joinDate = new Date(data.memberSince);
         const currentDate = new Date();
         if (!isNaN(joinDate)) {
             const totalMonths = (currentDate.getFullYear() - joinDate.getFullYear()) * 12 + (currentDate.getMonth() - joinDate.getMonth());
-            if (totalMonths < 6) {
-                memberSinceIcon = paymentNotVerifiedIcon;
-            } else if (totalMonths > 24) {
-                memberSinceIcon = paymentVerifiedIcon;
+            let icon = '';
+            let tooltipText = '';
+
+                                                            if (totalMonths < 6) {
+                                                                icon = paymentNotVerifiedIcon; // RED
+                                                                tooltipText = 'عميل جديد جدًا. لا يوجد سجل يمكن الحكم عليه، تقدم بحذر.';
+                                                            } else if (totalMonths >= 6 && totalMonths <= 24) {
+                                                                icon = proposalsWarningIcon; // YELLOW
+                                                                tooltipText = 'عميل لديه بعض الخبرة على المنصة. مؤشر محايد.';
+                                                            } else if (totalMonths > 24) {
+                                                                icon = paymentVerifiedIcon; // GREEN
+                                                                tooltipText = 'عميل قديم ومستقر (أكثر من سنتين). مؤشر إيجابي على الموثوقية.';
+                                                            }            if (icon) {
+                memberSinceIconWithTooltip = `<span class="tooltip-container">${icon}<span class="tooltip-text">${tooltipText}</span></span>`;
             }
         }
     }
@@ -323,8 +333,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let invitesSentHtml = '';
-    if (data.invitesSent && parseInt(data.invitesSent) > 0) {
-        invitesSentHtml = `<dt>Invites Sent</dt><dd>${data.invitesSent}</dd>`;
+    if (data.invitesSent && data.invitesSent !== 'N/A' && parseInt(data.invitesSent) > 0) {
+        const invitesCount = parseInt(data.invitesSent);
+        let invitesSentIconWithTooltip = '';
+        let icon = '';
+        let tooltipText = '';
+
+        if (invitesCount >= 18) {
+            icon = paymentNotVerifiedIcon; // RED
+            tooltipText = 'العميل يرسل دعوات كثيرة جدًا، قد يكون عشوائيًا في اختياراته.';
+                        } else if (invitesCount >= 10) {
+                            icon = proposalsWarningIcon; // YELLOW
+                            tooltipText = 'العميل قد لا يكون يعرف ما يريد ويرسل دعوات عشوائية، كن حذرًا.';
+                        }
+        if (icon) {
+            invitesSentIconWithTooltip = `<span class="tooltip-container">${icon}<span class="tooltip-text">${tooltipText}</span></span>`;
+        }
+        
+        // Build the full HTML for the list item
+        invitesSentHtml = `<dt>Invites Sent</dt><dd>${data.invitesSent} ${invitesSentIconWithTooltip}</dd>`;
     }
 
     let hiresHtml = '';
@@ -436,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Jobs Posted</dt><dd>${data.jobsPosted || 'N/A'} ${jobsPostedIcon}</dd>
           <dt>Hire Rate</dt><dd>${data.hireRate || 'N/A'} (${data.openJobs || 'N/A'} open) ${hireRateIcon}</dd>
           <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIcon}</dd>
-          <dt>Member Since</dt><dd>${data.memberSince || 'N/A'} ${memberSinceIcon}</dd>
+          <dt>Member Since</dt><dd>${data.memberSince || 'N/A'} ${memberSinceIconWithTooltip}</dd>
         </dl>
         <h4>Client Recent History (${(data.clientHistory || []).length})</h4>
         <div class="history-container">

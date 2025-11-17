@@ -155,19 +155,34 @@ function extractJobData() {
   let requiredConnects = 'N/A';
   let availableConnects = 'N/A';
 
-  // Find the element containing "Required Connects to submit a proposal:"
-  const requiredConnectsSpan = findElementByText('span', 'Required Connects to submit a proposal:');
-  if (requiredConnectsSpan && requiredConnectsSpan.nextElementSibling) {
-      requiredConnects = requiredConnectsSpan.nextElementSibling.innerText.trim();
+  // This new robust strategy finds a common parent container for all "Connects" info
+  // to avoid grabbing unrelated data from the page, which caused the previous bug.
+  const potentialContainers = document.querySelectorAll('div[class*="text-light-on-muted"]');
+  let connectsContainer = null;
+
+  for (const container of potentialContainers) {
+      const text = container.innerText;
+      // A valid container must have both pieces of information.
+      if ((text.includes('Required Connects') || text.includes('Send a proposal for:')) && text.includes('Available Connects:')) {
+          connectsContainer = container;
+          break; // Found the correct container, stop searching.
+      }
   }
 
-  // Find the element containing "Available Connects:"
-  const availableConnectsDiv = findElementByText('div', 'Available Connects:');
-  if (availableConnectsDiv) {
-      const text = availableConnectsDiv.innerText;
-      const match = text.match(/Available Connects:\s*(\d+)/);
-      if (match && match[1]) {
-          availableConnects = match[1];
+  if (connectsContainer) {
+      const fullText = connectsContainer.innerText;
+
+      // Extract Required Connects from the container's text using regex.
+      // Handles "Required Connects...: 8" and "Send a proposal for: 8 Connects"
+      const requiredMatch = fullText.match(/(?:Required Connects to submit a proposal:|Send a proposal for:)\s*(\d+)/);
+      if (requiredMatch && requiredMatch[1]) {
+          requiredConnects = requiredMatch[1];
+      }
+
+      // Extract Available Connects from the container's text using regex.
+      const availableMatch = fullText.match(/Available Connects:\s*(\d+)/);
+      if (availableMatch && availableMatch[1]) {
+          availableConnects = availableMatch[1];
       }
   }
 
