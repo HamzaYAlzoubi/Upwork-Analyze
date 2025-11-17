@@ -188,14 +188,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let totalSpentIcon = '';
-    const spentAmount = parseMoney(data.totalSpent);
-    if (spentAmount > 5000) {
-        totalSpentIcon = paymentVerifiedIcon;
-    } else if (data.totalSpent === 'N/A') {
-        totalSpentIcon = paymentNotVerifiedIcon;
-    }
-
+            let totalSpentIconWithTooltip = '';
+            const spentAmount = parseMoney(data.totalSpent);
+            let avgRateValue = parseMoney(data.avgHourlyRate);
+    
+            if (spentAmount > 100000) {
+                const tooltipText = 'إنفاق خرافي! عميل من الطراز الرفيع جدًا.';
+                totalSpentIconWithTooltip = `<span class="tooltip-container">${paymentVerifiedIcon}<span class="tooltip-text">${tooltipText}</span></span>`;
+            } else if (spentAmount > 35000) {
+                const tooltipText = 'إنفاق ممتاز. عميل جاد ومستثمر بقوة.';
+                totalSpentIconWithTooltip = `<span class="tooltip-container">${paymentVerifiedIcon}<span class="tooltip-text">${tooltipText}</span></span>`;
+            } else if (spentAmount > 5000) {
+                const tooltipText = 'إنفاق جيد. مؤشر قوي على الجدية.';
+                totalSpentIconWithTooltip = `<span class="tooltip-container">${paymentVerifiedIcon}<span class="tooltip-text">${tooltipText}</span></span>`;
+            } else if (spentAmount > 0) { // Covers the 0 to 5000 range
+                let tooltipText = '';
+                if (avgRateValue > 25) {
+                    tooltipText = 'إجمالي الإنفاق منخفض، لكن متوسط سعر الساعة الذي يدفعه جيد.';
+                } else if (avgRateValue <= 15 && avgRateValue > 0) {
+                    tooltipText = 'إجمالي ما انفقه العميل على منصة Upwork منخفض ، وتدل الاحصائيات ان السعر الذي يدفعه منخفض أيضا. هذا يعني أنه لا يدفع كثيرا.';
+                } else {
+                    tooltipText = 'العميل لديه سجل إنفاق لكنه ليس كبيرًا. قم بتقييم بقية العوامل.';
+                }
+                totalSpentIconWithTooltip = `<span class="tooltip-container">${proposalsWarningIcon}<span class="tooltip-text">${tooltipText}</span></span>`;
+            } else { // This covers N/A and $0
+                const tooltipText = 'العميل لم ينفق ﺃي مبالغ على منصة Upwork من قبل وهذا يمثل خطورة عالية جدا في التقديم';
+                totalSpentIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">${tooltipText}</span></span>`;
+            }
     let jobsPostedIcon = '';
     const jobsPostedValue = parseInt(data.jobsPosted);
     const hireRateValue = parseInt((data.hireRate || '').replace('%', ''));
@@ -254,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let avgRateIcon = '';
     let avgRateLabel = 'Avg Rate / Hours';
-    let avgRateValue = 'N/A';
+    avgRateValue = 'N/A'; // Removed 'let' to fix duplicate declaration
 
     if (data.avgHourlyRate !== 'N/A') {
         avgRateValue = `${data.avgHourlyRate} / ${data.totalHours}`;
@@ -488,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Payment Verified</dt><dd>${paymentVerifiedIconWithTooltip} ${data.paymentVerified}</dd>
           <dt>Rating</dt><dd>${starRating} ${data.rating} (${data.reviewsCount}) ${clientRatingIconWithTooltip}</dd>
           <dt>Location</dt><dd>${data.location || 'N/A'}</dd>
-          <dt>Total Spent</dt><dd>${data.totalSpent || 'N/A'} ${totalSpentIcon}</dd>
+          <dt>Total Spent</dt><dd>${data.totalSpent || 'N/A'} ${totalSpentIconWithTooltip}</dd>
           <dt>Jobs Posted</dt><dd>${data.jobsPosted || 'N/A'} ${jobsPostedIcon}</dd>
           <dt>Hire Rate</dt><dd>${data.hireRate || 'N/A'} (${data.openJobs || 'N/A'} open) ${hireRateIcon}</dd>
           <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIcon}</dd>
