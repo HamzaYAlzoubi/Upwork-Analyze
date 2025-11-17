@@ -216,35 +216,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 totalSpentIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">${tooltipText}</span></span>`;
             }
     let jobsPostedIcon = '';
+    let jobsPostedTooltipText = '';
     const jobsPostedValue = parseInt(data.jobsPosted);
     const hireRateValue = parseInt((data.hireRate || '').replace('%', ''));
 
     if (data.jobsPosted === 'N/A') {
         jobsPostedIcon = paymentNotVerifiedIcon;
-    } else if (jobsPostedValue > 50 && hireRateValue > 75) {
+        jobsPostedTooltipText = 'لا توجد بيانات عن عدد الوظائف التي نشرها العميل.';
+    } else if (jobsPostedValue > 50 && hireRateValue > 85) { // Updated condition from 75 to 85
         jobsPostedIcon = paymentVerifiedIcon;
+        jobsPostedTooltipText = 'عميل متمرس وخبير في التوظيف على المنصة ويوظف بانتظام.';
+    } else if (jobsPostedValue <= 5 && hireRateValue >= 90) { // New yellow condition
+        jobsPostedIcon = proposalsWarningIcon;
+        jobsPostedTooltipText = 'العميل ينشر وظائف قليلة لكنه جاد جدًا في التوظيف عند النشر. فرصة جيدة إذا كانت الوظيفة تناسبك تمامًا.';
     } else if (jobsPostedValue <= 5 && hireRateValue < 90) {
         jobsPostedIcon = paymentNotVerifiedIcon;
+        jobsPostedTooltipText = 'نشر عددًا قليلًا جدًا من الوظائف ولا يبدو أنه يوظف بانتظام. تقدم بحذر شديد.';
+    }
+    // For other cases, jobsPostedIcon remains empty, meaning no icon will be displayed.
+
+    let jobsPostedIconWithTooltip = '';
+    if (jobsPostedIcon) {
+        jobsPostedIconWithTooltip = `<span class="tooltip-container">${jobsPostedIcon}<span class="tooltip-text">${jobsPostedTooltipText}</span></span>`;
     }
 
     let hireRateIcon = '';
+    let hireRateTooltipText = '';
     if (data.hireRate === 'N/A') {
         hireRateIcon = paymentNotVerifiedIcon;
+        hireRateTooltipText = 'لا يوجد معدل توظيف متاح. قد يكون العميل جديدًا أو لا يوظف كثيرًا. كن حذرًا.';
     } else {
         const hireRateValue = parseInt((data.hireRate || '').replace('%', ''));
         const jobsPostedValue = parseInt(data.jobsPosted);
 
         if (hireRateValue < 60) {
             hireRateIcon = paymentNotVerifiedIcon;
+            hireRateTooltipText = 'معدل التوظيف منخفض جدًا. هذا العميل لا يميل إلى توظيف المستقلين الذين يتواصل معهم. فرصة التوظيف لديك ضعيفة.';
         } else if (hireRateValue >= 60 && hireRateValue <= 85) {
             hireRateIcon = proposalsWarningIcon;
+            hireRateTooltipText = 'معدل التوظيف متوسط. العميل يوظف أحيانًا، لكنه ليس حاسمًا دائمًا. قدم بحذر.';
         } else if (hireRateValue > 85) {
             if (jobsPostedValue > 5) {
                 hireRateIcon = paymentVerifiedIcon;
+                hireRateTooltipText = 'معدل توظيف ممتاز! هذا العميل يوظف بانتظام. فرصة جيدة جدًا للتوظيف.';
             } else {
                 hireRateIcon = proposalsWarningIcon;
+                hireRateTooltipText = 'معدل التوظيف مرتفع، لكن العميل نشر عددًا قليلاً من الوظائف. قد يكون جديدًا أو لا يستخدم المنصة كثيرًا. راجع نوعية أعماله السابقة.';
             }
         }
+    }
+    let hireRateIconWithTooltip = '';
+    if (hireRateIcon) {
+        hireRateIconWithTooltip = `<span class="tooltip-container">${hireRateIcon}<span class="tooltip-text">${hireRateTooltipText}</span></span>`;
     }
 
     let memberSinceIconWithTooltip = '';
@@ -508,8 +531,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Rating</dt><dd>${starRating} ${data.rating} (${data.reviewsCount}) ${clientRatingIconWithTooltip}</dd>
           <dt>Location</dt><dd>${data.location || 'N/A'}</dd>
           <dt>Total Spent</dt><dd>${data.totalSpent || 'N/A'} ${totalSpentIconWithTooltip}</dd>
-          <dt>Jobs Posted</dt><dd>${data.jobsPosted || 'N/A'} ${jobsPostedIcon}</dd>
-          <dt>Hire Rate</dt><dd>${data.hireRate || 'N/A'} (${data.openJobs || 'N/A'} open) ${hireRateIcon}</dd>
+          <dt>Jobs Posted</dt><dd>${data.jobsPosted || 'N/A'} ${jobsPostedIconWithTooltip}</dd>
+          <dt>Hire Rate</dt><dd>${data.hireRate || 'N/A'} (${data.openJobs || 'N/A'} open) ${hireRateIconWithTooltip}</dd>
           <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIcon}</dd>
           <dt>Member Since</dt><dd>${data.memberSince || 'N/A'} ${memberSinceIconWithTooltip}</dd>
         </dl>
