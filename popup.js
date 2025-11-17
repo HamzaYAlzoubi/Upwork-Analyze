@@ -1,30 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
   const analysisResultsDiv = document.getElementById('analysis-results');
+  
+  // --- Modal Elements ---
   const suggestionsModal = document.getElementById('suggestions-modal');
+  const profileModal = document.getElementById('profile-modal');
+  const modals = document.querySelectorAll('.modal');
+  
   const suggestionsBtn = document.getElementById('suggestions-btn');
-  const closeBtn = document.querySelector('.close-btn');
+  const profileBtn = document.getElementById('profile-btn');
   const saveSuggestionBtn = document.getElementById('save-suggestion-btn');
+  const closeBtns = document.querySelectorAll('.close-btn');
+  
   const suggestionText = document.getElementById('suggestion-text');
 
-  // --- Suggestions Modal Logic ---
+  // --- Modal Logic ---
+  suggestionsBtn.onclick = () => { suggestionsModal.style.display = 'block'; };
+  profileBtn.onclick = () => { profileModal.style.display = 'block'; };
 
-  // Load any saved suggestion from localStorage
+  const closeAllModals = () => {
+    modals.forEach(modal => { modal.style.display = 'none'; });
+  };
+
+  closeBtns.forEach(btn => { btn.onclick = closeAllModals; });
+
+  window.onclick = (event) => {
+    modals.forEach(modal => {
+      if (event.target === modal) {
+        closeAllModals();
+      }
+    });
+  };
+
+  // --- Suggestions Specific Logic ---
   const savedSuggestion = localStorage.getItem('suggestion');
   if (savedSuggestion) {
     suggestionText.value = savedSuggestion;
   }
-
-  // When the user clicks the button, open the modal 
-  suggestionsBtn.onclick = function() {
-    suggestionsModal.style.display = "block";
-  }
-
-  // When the user clicks on <span> (x), close the modal
-  closeBtn.onclick = function() {
-    suggestionsModal.style.display = "none";
-  }
-
-  // When the user clicks the save button, save to localStorage and close
   saveSuggestionBtn.onclick = function() {
     localStorage.setItem('suggestion', suggestionText.value);
     saveSuggestionBtn.textContent = 'Saved!';
@@ -33,15 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
       saveSuggestionBtn.textContent = 'Save Suggestion';
     }, 1000);
   }
-
-  // When the user clicks anywhere outside of the modal, close it
-  window.onclick = function(event) {
-    if (event.target == suggestionsModal) {
-      suggestionsModal.style.display = "none";
-    }
-  }
-
-  // --- End of Suggestions Modal Logic ---
+  // --- End of Modal Logic ---
 
   function parseMoney(moneyString) {
       if (typeof moneyString !== 'string' || moneyString === 'N/A') return 0;
@@ -203,15 +206,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let avgRateIcon = '';
+    let avgRateTooltipText = '';
     let avgRateLabel = 'Avg Rate / Hours';
     let avgRateValue = 'N/A';
 
     if (data.avgHourlyRate !== 'N/A') {
         avgRateValue = `${data.avgHourlyRate} / ${data.totalHours}`;
         const rateValue = parseFloat(data.avgHourlyRate.replace('$', ''));
-        if (rateValue < 10) avgRateIcon = paymentNotVerifiedIcon;
-        else if (rateValue <= 15) avgRateIcon = proposalsWarningIcon;
-        else avgRateIcon = paymentVerifiedIcon;
+        if (rateValue < 10) {
+            avgRateIcon = paymentNotVerifiedIcon;
+        } else if (rateValue <= 15) {
+            avgRateIcon = proposalsWarningIcon;
+        } else {
+            avgRateIcon = paymentVerifiedIcon;
+        }
     } else {
         avgRateLabel = 'Avg. Fixed-Price';
         const fixedPriceJobs = (data.clientHistory || [])
@@ -227,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fixedPriceJobs.length > 0) {
             const averagePrice = fixedPriceJobs.reduce((a, b) => a + b, 0) / fixedPriceJobs.length;
             avgRateValue = `~$${averagePrice.toFixed(2)}`;
-            avgRateIcon = calculateClientQualityScore(data, icons);
+            avgRateIcon = calculateClientQualityScore(data, icons); // Now returns just the icon string
         } else {
             avgRateValue = 'N/A';
             avgRateIcon = paymentNotVerifiedIcon;
@@ -248,22 +256,120 @@ document.addEventListener('DOMContentLoaded', () => {
         else connectsIcon = paymentNotVerifiedIcon;
     }
 
+    let lastViewedHtml = '';
+    if (data.lastViewed && data.lastViewed !== 'N/A') {
+        lastViewedHtml = `<dt>Last Viewed</dt><dd>${data.lastViewed}</dd>`;
+    }
+
+    let budgetIcon = '';
+    let budgetTooltipText = '';
+    if (data.jobType.toLowerCase().includes('hourly')) {
+        let jobRate = 0;
+        const rateNumbers = data.budgetOrRate.match(/\d+\.?\d*/g);
+        if (rateNumbers) {
+            const rates = rateNumbers.map(n => parseFloat(n));
+            if (rates.length > 1) {
+                jobRate = (rates[0] + rates[1]) / 2; // Average of range
+            } else if (rates.length === 1) {
+                jobRate = rates[0];
+            }
+        }
+
+        if (jobRate > 0) { // Only apply icon if a valid rate was parsed
+            if (jobRate <= 15 && data.experienceLevel.toLowerCase().includes('expert')) {
+                budgetIcon = paymentNotVerifiedIcon;
+                budgetTooltipText = 'معدل منخفض لوظيفة تتطلب مستوى خبير.';
+            } else if (jobRate < 10) {
+                budgetIcon = paymentNotVerifiedIcon;
+                budgetTooltipText = 'يعتبر هذا المعدل للساعة منخفضًا.';
+            } else if (jobRate <= 15) {
+                budgetIcon = proposalsWarningIcon;
+                budgetTooltipText = 'يعتبر هذا المعدل للساعة متوسطًا.';
+            } else {
+                budgetIcon = paymentVerifiedIcon;
+                budgetTooltipText = 'يعتبر هذا المعدل للساعة تنافسيًا.';
+            }
+        }
+    } else if (data.jobType.toLowerCase().includes('fixed-price')) { // Logic for fixed-price job budget
+        budgetIcon = calculateClientQualityScore(data, icons);
+        budgetTooltipText = 'يتم تقييم هذه الميزانية بناءً على متوسط ما يدفعه العميل في وظائفه السابقة مقارنةً بمدة المشروع وتقييماته العامة.';
+    }
+
+    let budgetIconWithTooltip = '';
+    if (budgetIcon) {
+        budgetIconWithTooltip = `<span class="tooltip-container">${budgetIcon}<span class="tooltip-text">${budgetTooltipText}</span></span>`;
+    }
+
+    let invitesSentHtml = '';
+    if (data.invitesSent && parseInt(data.invitesSent) > 0) {
+        invitesSentHtml = `<dt>Invites Sent</dt><dd>${data.invitesSent}</dd>`;
+    }
+
+    let hiresHtml = '';
+    if (data.hires && data.hires !== 'N/A') {
+        hiresHtml = `<dt>Hires</dt><dd>${data.hires} ${parseInt(data.hires) > 0 ? paymentNotVerifiedIcon : ''}</dd>`;
+    }
+
+    let experienceIcon = '';
+    let experienceTooltipText = '';
+    const userExperience = localStorage.getItem('userExperienceLevel');
+    const jobExperience = data.experienceLevel.toLowerCase();
+
+    if (userExperience) {
+        if (userExperience === 'Entry') {
+            if (jobExperience.includes('expert')) {
+                experienceIcon = paymentNotVerifiedIcon;
+                experienceTooltipText = 'مستوى خبرتك (مبتدئ) أقل بكثير من المطلوب (خبير).';
+            } else if (jobExperience.includes('intermediate')) {
+                experienceIcon = proposalsWarningIcon;
+                experienceTooltipText = 'مستوى خبرتك (مبتدئ) أقل من المطلوب (متوسط).';
+            } else { // Entry level
+                experienceIcon = paymentVerifiedIcon;
+                experienceTooltipText = 'مستوى خبرتك (مبتدئ) يتطابق مع المطلوب.';
+            }
+        } else if (userExperience === 'Intermediate') {
+            if (jobExperience.includes('expert')) {
+                experienceIcon = proposalsWarningIcon;
+                experienceTooltipText = 'مستوى خبرتك (متوسط) أقل من المطلوب (خبير).';
+            } else if (jobExperience.includes('intermediate')) { // Intermediate matches Intermediate
+                experienceIcon = paymentVerifiedIcon;
+                experienceTooltipText = 'مستوى خبرتك (متوسط) يتطابق مع المطلوب.';
+            } else { // Intermediate exceeds Entry
+                experienceIcon = paymentVerifiedIcon;
+                experienceTooltipText = 'مستوى خبرتك (متوسط) يتجاوز المطلوب (مبتدئ).';
+            }
+        } else if (userExperience === 'Expert') {
+            if (jobExperience.includes('expert')) { // Expert matches Expert
+                experienceIcon = paymentVerifiedIcon;
+                experienceTooltipText = 'مستوى خبرتك (خبير) يتطابق مع المطلوب.';
+            } else { // Expert exceeds Intermediate or Entry
+                experienceIcon = paymentVerifiedIcon;
+                experienceTooltipText = 'مستوى خبرتك (خبير) يتجاوز المطلوب.';
+            }
+        }
+    }
+
+    let experienceIconWithTooltip = '';
+    if (experienceIcon) {
+        experienceIconWithTooltip = `<span class="tooltip-container">${experienceIcon}<span class="tooltip-text">${experienceTooltipText}</span></span>`;
+    }
+
     analysisResultsDiv.innerHTML = `
       <div class="data-section">
         <h3>Job Details</h3>
         <dl>
           <dt>Title</dt><dd>${data.jobTitle}</dd>
           <dt>Type</dt><dd>${data.jobType}</dd>
-          <dt>Budget / Rate</dt><dd>${data.budgetOrRate}</dd>
-          <dt>Experience</dt><dd>${data.experienceLevel}</dd>
+          <dt>Budget / Rate</dt><dd>${data.budgetOrRate} ${budgetIconWithTooltip}</dd>
+          <dt>Experience</dt><dd>${data.experienceLevel} ${experienceIconWithTooltip}</dd>
           <dt>Connects</dt><dd>Required: ${data.requiredConnects} / Available: ${data.availableConnects} ${connectsIcon}</dd>
           <dt class="separator" colspan="2"></dt>
           <dt>Posted</dt><dd>${data.jobAge} ${jobAgeIcon}</dd>
-          <dt>Last Viewed</dt><dd>${data.lastViewed}</dd>
+          ${lastViewedHtml}
           <dt>Proposals</dt><dd>${data.proposalsCount} ${proposalsIcon}</dd>
           <dt>Interviewing</dt><dd>${data.interviewing}</dd>
-          <dt>Invites Sent</dt><dd>${data.invitesSent}</dd>
-          <dt>Hires</dt><dd>${data.hires} ${parseInt(data.hires) > 0 ? paymentNotVerifiedIcon : ''}</dd>
+          ${invitesSentHtml}
+          ${hiresHtml}
         </dl>
         <h4>Full Job Description</h4>
         <div class="description-box">
@@ -290,7 +396,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
   }
-
   function parseDurationInDays(jobPriceString) {
       if (!jobPriceString) return null;
       jobPriceString = jobPriceString.toLowerCase();
@@ -372,11 +477,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       let finalScore = (score_generosity * 0.5) + (score_professionalism * 0.3) + (score_behavior * 0.2);
+      let confidenceAdjusted = false;
 
       const historyCount = data.clientHistory ? data.clientHistory.length : 0;
       if (historyCount < 3 || reviews < 3) {
           if (finalScore > 0.5) finalScore = 0.1;
           if (finalScore < -0.5) finalScore = -0.1;
+          confidenceAdjusted = true;
       }
 
       if (finalScore > 0.3) return paymentVerifiedIcon;
@@ -463,5 +570,24 @@ CLIENT RECENT HISTORY ---
 ${historyText}
 `;
   }
+
+  // --- Profile Modal Logic ---
+  const experienceRadios = document.querySelectorAll('input[name="experienceLevel"]');
+
+  // Load saved experience level
+  const savedExperience = localStorage.getItem('userExperienceLevel');
+  if (savedExperience) {
+    const radioToCheck = document.querySelector(`input[name="experienceLevel"][value="${savedExperience}"]`);
+    if (radioToCheck) {
+      radioToCheck.checked = true;
+    }
+  }
+
+  // Save experience level on change
+  experienceRadios.forEach(radio => {
+    radio.addEventListener('change', (event) => {
+      localStorage.setItem('userExperienceLevel', event.target.value);
+    });
+  });
 
 });

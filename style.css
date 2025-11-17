@@ -284,3 +284,61 @@ dd {
 #save-suggestion-btn:hover {
   background-color: var(--primary-color-dark);
 }
+
+/* --- Tooltip Styles --- */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 160px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%; /* Position the tooltip above the icon */
+  left: 50%;
+  margin-left: -80px; /* Use half of the width to center the tooltip */
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 12px;
+}
+
+.tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* --- Profile Modal Styles --- */
+#profile-modal fieldset {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 10px 15px;
+  margin-top: 16px;
+}
+
+#profile-modal legend {
+  font-weight: 600;
+  padding: 0 5px;
+  font-size: 14px;
+}
+
+#profile-modal fieldset div {
+  margin-bottom: 8px;
+}
