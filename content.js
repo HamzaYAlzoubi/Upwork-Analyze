@@ -154,15 +154,20 @@ function extractJobData() {
 
   let requiredConnects = 'N/A';
   let availableConnects = 'N/A';
-  const connectsContainer = document.querySelector('div.text-light-on-muted[data-v-6d4ec4a7]');
-  if (connectsContainer) {
-      const requiredLabel = findElementByText('span', 'Required Connects to submit a proposal:', connectsContainer);
-      if (requiredLabel && requiredLabel.nextElementSibling) {
-          requiredConnects = requiredLabel.nextElementSibling.innerText.trim();
-      }
-      const availableDiv = findElementByText('div.mt-2', 'Available Connects:', connectsContainer);
-      if (availableDiv) {
-          availableConnects = availableDiv.innerText.replace('Available Connects:', '').trim();
+
+  // Find the element containing "Required Connects to submit a proposal:"
+  const requiredConnectsSpan = findElementByText('span', 'Required Connects to submit a proposal:');
+  if (requiredConnectsSpan && requiredConnectsSpan.nextElementSibling) {
+      requiredConnects = requiredConnectsSpan.nextElementSibling.innerText.trim();
+  }
+
+  // Find the element containing "Available Connects:"
+  const availableConnectsDiv = findElementByText('div', 'Available Connects:');
+  if (availableConnectsDiv) {
+      const text = availableConnectsDiv.innerText;
+      const match = text.match(/Available Connects:\s*(\d+)/);
+      if (match && match[1]) {
+          availableConnects = match[1];
       }
   }
 
@@ -212,25 +217,25 @@ function extractJobData() {
     fullJobDescription,
     jobType,
     budgetOrRate,
-    jobAge,
+    postedTime: jobAge,
     lastViewed,
-    proposalsCount,
+    proposals: proposalsCount,
     interviewing,
     invitesSent,
     hires,
     paymentVerified,
-    clientLocation,
+    location: clientLocation,
     experienceLevel,
-    clientJoinDate,
-    clientHireRate,
-    clientJobsPosted,
+    memberSince: clientJoinDate,
+    hireRate: clientHireRate,
+    jobsPosted: clientJobsPosted,
     openJobs,
     avgHourlyRate,
     totalHours,
     totalSpent,
-    clientRating,
-    clientReviewsCount,
-    requiredConnects,
+    rating: clientRating,
+    reviewsCount: clientReviewsCount,
+    connects: requiredConnects,
     availableConnects,
     jobDeadline,
     clientHistory
