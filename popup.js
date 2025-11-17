@@ -274,8 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
         let budgetIcon = '';
-
         let budgetTooltipText = '';
+        const userExperience = localStorage.getItem('userExperienceLevel');
 
         if (data.jobType.toLowerCase().includes('hourly')) {
 
@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else if (data.jobType.toLowerCase().includes('fixed-price')) { // Logic for fixed-price job budget
 
-                const budgetResult = evaluateFixedPriceBudget(data, icons);
+                const budgetResult = evaluateFixedPriceBudget(data, icons, userExperience);
 
                 budgetIcon = budgetResult.icon;
 
@@ -356,8 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let experienceIcon = '';
 
             let experienceTooltipText = '';
-
-            const userExperience = localStorage.getItem('userExperienceLevel');
 
             const jobExperience = data.experienceLevel.toLowerCase();
 
@@ -527,290 +525,268 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-            function evaluateFixedPriceBudget(data, icons) {
-
-        
-
-              // --- Primary Check: Deadline ---
-
-        
-
-                  if (data.jobDeadline && data.jobDeadline !== 'N/A') {
-
-        
-
-                      let durationDays = 0;
-
-        
-
-                      try {
-
-        
-
-                          const deadlineDate = new Date(data.jobDeadline);
-
-        
-
-                          const today = new Date();
-
-        
-
-                          deadlineDate.setHours(0, 0, 0, 0);
-
-        
-
-                          today.setHours(0, 0, 0, 0);
-
-        
-
-                          const diffTime = deadlineDate - today;
-
-        
-
-                          durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        
-
-                          if (durationDays <= 0) {
-
-        
-
-                              durationDays = 1; // If due today or in the past, treat as a 1-day project.
-
-        
-
-                          }
-
-        
-
-                      } catch (e) {
-
-        
-
-                          durationDays = 0; // On error, ensure we don't proceed with this check.
-
-        
-
-                      }
-
-        
-
-              
-
-        
-
-                      if (durationDays > 0) {
-
-        
-
-                          // Estimate daily hours
-
-        
-
-                          let dailyHours = 5; // Default
-
-        
-
-                          const description = data.fullJobDescription.toLowerCase();
-
-        
-
-                          if (description.includes('full-time') || description.includes('40 hours/week')) {
-
-        
-
-                              dailyHours = 8;
-
-        
-
-                          } else if (description.includes('part-time') || description.includes('20 hours/week')) {
-
-        
-
-                              dailyHours = 4;
-
-        
-
-                          }
-
-        
-
-              
-
-        
-
-                          const totalHours = durationDays * dailyHours;
-
-        
+                        function evaluateFixedPriceBudget(data, icons, userExperience) {
+                    
 
                           const actualBudget = parseMoney(data.budgetOrRate);
 
-        
+                          const avgRateValue = parseMoney(data.avgHourlyRate);
 
-              
+            
 
-        
+                          // --- Priority 1: Suspicious High Budget / Low Avg Rate ---
 
-                          if (totalHours > 0) {
+                          if (actualBudget >= 2500 && avgRateValue > 0 && avgRateValue <= 15) {
 
-        
+                              return {
 
-                              const impliedRate = actualBudget / totalHours;
+                                  icon: icons.proposalsWarningIcon,
 
-        
+                                  tooltip: '<strong>الميزانية مرتفعة جدًا مقارنة بمتوسط سعر الساعة الذي يدفعه العميل عادةً، قد يكون الأمر مريبًا.</strong> تحقق من مدة المشروع.'
 
-                              const evalResult = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
-
-        
-
-                              
-
-        
-
-                              let specificTooltip = '';
-
-        
-
-                              if (evalResult.icon === icons.paymentVerifiedIcon) {
-
-        
-
-                                  specificTooltip = 'الميزانية المحددة لهذه الوظيفة ممتازة مقارنة بموعد التسليم.';
-
-        
-
-                              } else if (evalResult.icon === icons.proposalsWarningIcon) {
-
-        
-
-                                  specificTooltip = 'الميزانية المحددة لهذه الوظيفة مقبولة مقارنة بموعد التسليم.';
-
-        
-
-                              } else if (evalResult.icon === icons.paymentNotVerifiedIcon) {
-
-        
-
-                                  specificTooltip = 'الميزانية المحددة لهذه الوظيفة منخفضة مقارنة بموعد التسليم.';
-
-        
-
-                              }
-
-        
-
-                              return { icon: evalResult.icon, tooltip: specificTooltip || evalResult.tooltip };
-
-        
+                              };
 
                           }
 
-        
+            
 
-                      }
+                          // --- Priority 2: Deadline-based Logic ---
 
-        
+                          if (data.jobDeadline && data.jobDeadline !== 'N/A') {
 
-                  }
+                    
 
-        
+                              let durationDays = 0;
 
-          
+                    
 
-        
+                              try {
 
-              // --- Secondary Check: High Budget ---
+                    
 
-        
+                                  const deadlineDate = new Date(data.jobDeadline);
 
-              const actualBudget = parseMoney(data.budgetOrRate);
+                    
 
-        
+                                  const today = new Date();
 
-              if (actualBudget >= 1000) {
+                    
 
-        
+                                  deadlineDate.setHours(0, 0, 0, 0);
 
-                  return {
+                    
 
-        
+                                  today.setHours(0, 0, 0, 0);
 
-                      icon: icons.paymentVerifiedIcon,
+                    
 
-        
+                                  const diffTime = deadlineDate - today;
 
-                      tooltip: 'سعر الوظيفة مرتفع وممتاز، ولكن تأكد من المدة الزمنية للمشروع'
+                    
 
-        
+                                  durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                  };
+                    
 
-        
+                                  if (durationDays <= 0) {
 
-              }
+                    
 
-        
+                                      durationDays = 1; // If due today or in the past, treat as a 1-day project.
 
-          
+                    
 
-        
+                                  }
 
-              // If all checks fail, do nothing.
+                    
 
-        
+                              } catch (e) {
 
-              return { icon: '', tooltip: '' };
+                    
 
-        
+                                  durationDays = 0; // On error, ensure we don't proceed with this check.
 
-            }
+                    
+
+                              }
+
+                    
+
+                          
+
+                    
+
+                              if (durationDays > 0) {
+
+            
+
+                                  // --- Sub-priority A: User Experience Override for Long Deadlines ---
+
+                                  if (durationDays > 30) { // "Far" deadline
+
+                                      if (userExperience === 'Entry') {
+
+                                          return {
+
+                                              icon: icons.paymentVerifiedIcon, // GREEN
+
+                                              tooltip: 'الموعد النهائي بعيد، مما يجعله مناسبًا لمستوى خبرتك كمبتدئ.'
+
+                                          };
+
+                                      }
+
+                                      if (userExperience === 'Intermediate') {
+
+                                          return {
+
+                                              icon: icons.proposalsWarningIcon, // YELLOW
+
+                                              tooltip: 'الموعد النهائي بعيد، لكن انتبه فقد تكون الميزانية غير كافية لمستوى خبرتك المتوسط.'
+
+                                          };
+
+                                      }
+
+                                  }
+
+                    
+
+                                  // --- Sub-priority B: Implied Rate Calculation (Fallback) ---
+
+                                  let dailyHours = 4; // Default
+
+                    
+
+                                  const totalHours = durationDays * dailyHours;
+
+                    
+
+                                  if (totalHours > 0) {
+
+                    
+
+                                      const impliedRate = actualBudget / totalHours;
+
+                    
+
+                                      const evalResult = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
+
+                                      const contextText = "هذا التقييم يفترض أنك تعمل 4 ساعات يوميًا بناءً على مدة المشروع.";
+
+                                      let finalTooltip = evalResult.tooltip;
+
+            
+
+                                      if (evalResult.icon === icons.paymentVerifiedIcon) {
+
+                                          finalTooltip = `<strong>الميزانية تبدو ممتازة.</strong> ${contextText}`;
+
+                                      } else if (evalResult.icon === icons.proposalsWarningIcon) {
+
+                                          finalTooltip = `<strong>الميزانية تبدو مقبولة.</strong> ${contextText}`;
+
+                                      } else if (evalResult.icon === icons.paymentNotVerifiedIcon) {
+
+                                          finalTooltip = `<strong>${evalResult.tooltip}</strong> ${contextText}`;
+
+                                      }
+
+                    
+
+                                      return { icon: evalResult.icon, tooltip: finalTooltip };
+
+                    
+
+                                  }
+
+                    
+
+                              }
+
+                    
+
+                          }
+
+                    
+
+                      
+
+                    
+
+                          // --- Priority 3: Simple High Budget (if other checks failed) ---
+
+                          if (actualBudget >= 1000) {
+
+                    
+
+                              return {
+
+                    
+
+                                  icon: icons.paymentVerifiedIcon,
+
+                    
+
+                                  tooltip: 'سعر الوظيفة مرتفع وممتاز، ولكن تأكد من المدة الزمنية للمشروع'
+
+                    
+
+                              };
+
+                    
+
+                          }
+
+            
+
+                                        // If all checks fail, do nothing.
+
+            
+
+                                  
+
+            
+
+                                        return { icon: '', tooltip: '' };
+
+            
+
+                                  
+
+            
+
+                                      }
 
         
 
           function getHourlyRateEvaluation(rate, experienceLevel, icons) {
-
             const { paymentVerifiedIcon, proposalsWarningIcon, paymentNotVerifiedIcon } = icons;
-
+            const isExpert = experienceLevel.toLowerCase().includes('expert');
             let icon = '';
-
             let tooltip = '';
 
-        
-
-            if (rate <= 15 && experienceLevel.toLowerCase().includes('expert')) {
-
+            if (rate < 10) { // Priority 1: Very Low Rate (always red)
                 icon = paymentNotVerifiedIcon;
-
-                tooltip = 'معدل منخفض لوظيفة تتطلب مستوى خبير.';
-
-            } else if (rate < 10) {
-
-                icon = paymentNotVerifiedIcon;
-
                 tooltip = 'يعتبر هذا المعدل للساعة منخفضًا جدًا.';
-
-            } else if (rate <= 15) {
-
+            } else if (rate <= 15) { // Priority 2: Mediocre Rate (always yellow)
                 icon = proposalsWarningIcon;
-
                 tooltip = 'يعتبر هذا المعدل للساعة متوسطًا.';
-
-            } else if (rate >= 30) {
-
+            } else if (rate <= 20 && isExpert) { // Priority 3: Low for an Expert (yellow)
+                icon = proposalsWarningIcon;
+                tooltip = 'يعتبر هذا المعدل للساعة مقبولاً، ولكنه منخفض لوظيفة تتطلب مستوى خبير.';
+            } else if (rate > 20 && rate < 30) { // Good Rate
                 icon = paymentVerifiedIcon;
-
-                tooltip = 'يعتبر هذا المعدل للساعة ممتازًا للغاية.';
-
-            } else { // rate > 15 and rate < 30
-
-                icon = paymentVerifiedIcon;
-
                 tooltip = 'يعتبر هذا المعدل للساعة جيدًا.';
-
+            } else if (rate >= 30) { // Excellent Rate
+                icon = paymentVerifiedIcon;
+                tooltip = 'يعتبر هذا المعدل للساعة ممتازًا للغاية.';
+            } else { // Default case for rates between 15 and 20 for non-experts, which is good.
+                icon = paymentVerifiedIcon;
+                tooltip = 'يعتبر هذا المعدل للساعة جيدًا.';
             }
-
+            
             return { icon, tooltip };
-
           }
 
 

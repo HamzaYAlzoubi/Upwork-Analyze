@@ -188,6 +188,9 @@ function extractJobData() {
         }
     }
 
+    const dateEl = item.querySelector('[data-cy="date"] .text-body-sm');
+    const jobDate = dateEl ? dateEl.innerText.trim().replace(/\n/g, '') : 'N/A';
+    
     const statsEl = item.querySelector('[data-cy="stats"]');
     let jobPrice = 'N/A';
     if (statsEl) {
@@ -199,6 +202,7 @@ function extractJobData() {
       freelancerName,
       clientFeedback,
       freelancerFeedback,
+      jobDate, // New field for date
       jobPrice
     };
   });
