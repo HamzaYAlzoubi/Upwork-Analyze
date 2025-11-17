@@ -438,7 +438,36 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         
+            // New logic for job type preference
+            const userJobTypePreference = localStorage.getItem('userJobTypePreference');
+            let jobTypeIcon = '';
+            let jobTypeTooltip = '';
 
+            if (userJobTypePreference && userJobTypePreference !== 'Whatever') {
+                const jobIsHourly = data.jobType.toLowerCase().includes('hourly');
+                const jobIsFixed = data.jobType.toLowerCase().includes('fixed-price');
+
+                if (userJobTypePreference === 'Hourly' && jobIsFixed) {
+                    jobTypeIcon = icons.proposalsWarningIcon;
+                    jobTypeTooltip = 'هذه وظيفة بسعر ثابت، لكنك تفضل العمل بالساعة.';
+                } else if (userJobTypePreference === 'Fixed-price' && jobIsHourly) {
+                    jobTypeIcon = icons.proposalsWarningIcon;
+                    jobTypeTooltip = 'هذه وظيفة بالساعة، لكنك تفضل العمل بسعر ثابت.';
+                } else if (userJobTypePreference === 'Hourly' && jobIsHourly) {
+                    jobTypeIcon = icons.paymentVerifiedIcon;
+                    jobTypeTooltip = 'هذه الوظيفة تتوافق مع تفضيلك للعمل بالساعة.';
+                } else if (userJobTypePreference === 'Fixed-price' && jobIsFixed) {
+                    jobTypeIcon = icons.paymentVerifiedIcon;
+                    jobTypeTooltip = 'هذه الوظيفة تتوافق مع تفضيلك للعمل بسعر ثابت.';
+                }
+            }
+
+            let jobTypeIconWithTooltip = '';
+            if (jobTypeIcon) {
+                jobTypeIconWithTooltip = `<span class="tooltip-container">${jobTypeIcon}<span class="tooltip-text">${jobTypeTooltip}</span></span>`;
+            }
+
+        
             analysisResultsDiv.innerHTML = `
 
               <div class="data-section">
@@ -449,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                   <dt>Title</dt><dd>${data.jobTitle}</dd>
 
-                  <dt>Type</dt><dd>${data.jobType}</dd>
+                  <dt>Type</dt><dd>${data.jobType} ${jobTypeIconWithTooltip}</dd>
 
                   <dt>Budget / Rate</dt><dd>${data.budgetOrRate} ${budgetIconWithTooltip}</dd>
 
@@ -830,45 +859,47 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   function generateFullText(data) {
-      let historyText = data.clientHistory.map(item => 
-`Project: ${item.projectTitle}
-  - Feedback to Client: ${item.freelancerFeedback}
-  - Feedback from Client: ${item.clientFeedback}`
+      let historyText = (data.clientHistory || []).map(item => 
+`Project: ${item.projectTitle || 'N/A'}
+  - Date: ${item.jobDate || 'N/A'}
+  - Price: ${item.jobPrice || 'N/A'}
+  - Feedback to Client: ${item.freelancerFeedback || 'N/A'}
+  - Feedback from Client: ${item.clientFeedback || 'N/A'}`
       ).join('\n\n');
 
-      return `
----
-JOB DETAILS ---
-Job Title: ${data.jobTitle}
-Job Type: ${data.jobType}
-Budget / Rate: ${data.budgetOrRate}
-Experience Level: ${data.experienceLevel}
-Connects: Required ${data.requiredConnects} / Available ${data.availableConnects}
-Posted: ${data.jobAge}
-Last Viewed: ${data.lastViewed}
-Proposals: ${data.proposalsCount}
-Interviewing: ${data.interviewing}
-Invites Sent: ${data.invitesSent}
-Hires: ${data.hires}
+      if (!historyText) {
+        historyText = 'No history available.';
+      }
 
----
-CLIENT DETAILS ---
-Payment Verified: ${data.paymentVerified}
-Rating: ${data.clientRating} (${data.clientReviewsCount})
-Location: ${data.clientLocation}
-Total Spent: ${data.totalSpent}
-Avg Hourly Rate: ${data.avgHourlyRate}
-Total Hours: ${data.totalHours}
-Jobs Posted: ${data.clientJobsPosted}
-Hire Rate: ${data.clientHireRate} (${data.openJobs} open)
-Member Since: ${data.clientJoinDate}
+      return `--- JOB DETAILS ---
+Job Title: ${data.jobTitle || 'N/A'}
+Job Type: ${data.jobType || 'N/A'}
+Budget / Rate: ${data.budgetOrRate || 'N/A'}
+Deadline: ${data.jobDeadline || 'N/A'}
+Experience Level: ${data.experienceLevel || 'N/A'}
+Connects: ${data.connects || 'N/A'}
+Posted: ${data.postedTime || 'N/A'}
+Last Viewed: ${data.lastViewed || 'N/A'}
+Proposals: ${data.proposals || 'N/A'}
+Interviewing: ${data.interviewing || 'N/A'}
+Invites Sent: ${data.invitesSent || 'N/A'}
+Hires: ${data.hires || 'N/A'}
 
----
-FULL JOB DESCRIPTION ---
-${data.fullJobDescription}
+--- CLIENT DETAILS ---
+Payment Verified: ${data.paymentVerified ? 'Yes' : 'No'}
+Rating: ${data.rating || 'N/A'}
+Location: ${data.location || 'N/A'}
+Total Spent: ${data.totalSpent || 'N/A'}
+Avg Hourly Rate: ${data.avgHourlyRate || 'N/A'}
+Total Hours: ${data.totalHours || 'N/A'}
+Jobs Posted: ${data.jobsPosted || 'N/A'}
+Hire Rate: ${data.hireRate || 'N/A'}
+Member Since: ${data.memberSince || 'N/A'}
 
----
-CLIENT RECENT HISTORY ---
+--- FULL JOB DESCRIPTION ---
+${data.fullJobDescription || 'N/A'}
+
+--- CLIENT RECENT HISTORY ---
 ${historyText}
 `;
   }
@@ -889,6 +920,39 @@ ${historyText}
   experienceRadios.forEach(radio => {
     radio.addEventListener('change', (event) => {
       localStorage.setItem('userExperienceLevel', event.target.value);
+    });
+  });
+
+  // --- Job Type Preference Logic ---
+  const jobTypeRadios = document.querySelectorAll('input[name="jobTypePreference"]');
+  
+  // Load saved job type preference
+  const savedJobType = localStorage.getItem('userJobTypePreference');
+  if (savedJobType) {
+    const radioToCheck = document.querySelector(`input[name="jobTypePreference"][value="${savedJobType}"]`);
+    if (radioToCheck) {
+      radioToCheck.checked = true;
+    }
+  }
+
+  // Save job type preference on change
+  jobTypeRadios.forEach(radio => {
+    radio.addEventListener('change', (event) => {
+      localStorage.setItem('userJobTypePreference', event.target.value);
+    });
+  });
+
+  // --- Clear Selections Logic ---
+  const clearProfileBtn = document.getElementById('clear-profile-btn');
+  clearProfileBtn.addEventListener('click', () => {
+    // Clear from localStorage
+    localStorage.removeItem('userExperienceLevel');
+    localStorage.removeItem('userJobTypePreference');
+
+    // Uncheck all radio buttons
+    const allRadios = document.querySelectorAll('#profile-modal input[type="radio"]');
+    allRadios.forEach(radio => {
+      radio.checked = false;
     });
   });
 

@@ -341,3 +341,58 @@ dd {
 #profile-modal fieldset div {
   margin-bottom: 8px;
 }
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Space between radio buttons */
+  padding-top: 5px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between title and button */
+  margin-bottom: 8px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  line-height: 1; /* Ensure h2 takes minimal vertical space for better alignment */
+}
+
+#clear-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  background-color: transparent;
+  color: #555;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+  position: relative; /* Enable positioning */
+  top: 1px; /* Move down by 1px */
+}
+
+#clear-profile-btn:hover {
+  background-color: #f5f5f5;
+  border-color: #dcdcdc;
+}
+
+#clear-profile-btn svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
