@@ -41,7 +41,7 @@ h1 {
 
 .button-group {
   display: flex;
-  gap: 8px;
+  gap: 5px; /* Reduced from 8px */
 }
 
 /* Base style for all buttons (secondary/outline style) */
@@ -49,14 +49,14 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px; /* Slightly reduced gap */
-  padding: 6px 10px; /* Reduced padding */
+  gap: 4px; /* Reduced from 5px */
+  padding: 6px 8px; /* Reduced from 6px 10px */
   border: 1px solid var(--border-color);
   border-radius: 20px; /* Pill-shaped */
   background-color: transparent;
   color: #555;
   cursor: pointer;
-  font-size: 11px; /* Reduced font size */
+  font-size: 10px; /* Reduced from 11px */
   font-weight: 600;
   transition: all 0.2s ease-in-out;
   white-space: nowrap; /* Prevent text wrapping */
