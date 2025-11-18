@@ -279,37 +279,49 @@ document.addEventListener('DOMContentLoaded', () => {
             let icon = '';
             let tooltipText = '';
 
-                                                            if (totalMonths < 6) {
-                                                                icon = paymentNotVerifiedIcon; // RED
-                                                                tooltipText = 'عميل جديد جدًا. لا يوجد سجل يمكن الحكم عليه، تقدم بحذر.';
-                                                            } else if (totalMonths >= 6 && totalMonths <= 24) {
-                                                                icon = proposalsWarningIcon; // YELLOW
-                                                                tooltipText = 'عميل لديه بعض الخبرة على المنصة. مؤشر محايد.';
-                                                            } else if (totalMonths > 24) {
-                                                                icon = paymentVerifiedIcon; // GREEN
-                                                                tooltipText = 'عميل قديم ومستقر (أكثر من سنتين). مؤشر إيجابي على الموثوقية.';
-                                                            }            if (icon) {
+            if (totalMonths < 6) {
+                icon = paymentNotVerifiedIcon; // RED
+                tooltipText = 'العميل جديد على المنصة. لا يوجد تاريخ طويل كافٍ للحكم على موثوقيته واستقراره.';
+            } else if (totalMonths >= 6 && totalMonths <= 12) {
+                icon = proposalsWarningIcon; // YELLOW
+                tooltipText = 'العميل لديه أقدمية مقبولة على المنصة، لكنها لا تعتبر فترة طويلة لضمان الاستقرار الكامل.';
+            } else if (totalMonths > 12 && totalMonths < 24) {
+                icon = paymentVerifiedIcon; // GREEN
+                tooltipText = 'عميل مستقر على المنصة لأكثر من عام. مؤشر جيد على الموثوقية.';
+            } else if (totalMonths >= 24) {
+                icon = paymentVerifiedIcon; // IDEAL GREEN
+                tooltipText = 'عميل قديم ومستقر (سنتين أو أكثر). مؤشر قوي جدًا على الموثوقية والخبرة في التعامل على المنصة.';
+            }
+            
+            if (icon) {
                 memberSinceIconWithTooltip = `<span class="tooltip-container">${icon}<span class="tooltip-text">${tooltipText}</span></span>`;
             }
         }
     }
 
     let avgRateIcon = '';
+    let avgRateTooltipText = '';
     let avgRateLabel = 'Avg Rate / Hours';
-    avgRateValue = 'N/A'; // Removed 'let' to fix duplicate declaration
+    avgRateValue = 'N/A'; // This is a reassignment
 
     if (data.avgHourlyRate !== 'N/A') {
         avgRateValue = `${data.avgHourlyRate} / ${data.totalHours}`;
         const rateValue = parseFloat((data.avgHourlyRate || '').replace('$', ''));
-        if (rateValue < 10) {
-            avgRateIcon = paymentNotVerifiedIcon;
-        } else if (rateValue <= 15) {
-            avgRateIcon = proposalsWarningIcon;
-        } else {
+        if (rateValue >= 30) {
             avgRateIcon = paymentVerifiedIcon;
+            avgRateTooltipText = 'عميل مثالي ويدفع بسخاء مقابل القيمة. فرصة ممتازة.';
+        } else if (rateValue > 15) {
+            avgRateIcon = paymentVerifiedIcon;
+            avgRateTooltipText = 'متوسط سعر الساعة الذي يدفعه العميل جيد جدًا.';
+        } else if (rateValue > 10) {
+            avgRateIcon = proposalsWarningIcon;
+            avgRateTooltipText = 'متوسط سعر الساعة الذي يدفعه العميل مقبول، لكنه ليس مرتفعًا.';
+        } else {
+            avgRateIcon = paymentNotVerifiedIcon;
+            avgRateTooltipText = 'متوسط سعر الساعة الذي يدفعه العميل منخفض جدًا.';
         }
     } else {
-        avgRateLabel = 'Avg. Fixed-Price';
+        // Default label remains 'Avg Rate / Hours' unless we find fixed-price jobs
         const fixedPriceJobs = (data.clientHistory || [])
             .map(item => {
                 if (item.jobPrice && (item.jobPrice || '').toLowerCase().includes('fixed-price')) {
@@ -321,13 +333,21 @@ document.addEventListener('DOMContentLoaded', () => {
             .filter(price => price !== null);
 
         if (fixedPriceJobs.length > 0) {
+            avgRateLabel = 'Avg. Fixed-Price'; // Change the label ONLY here
             const averagePrice = fixedPriceJobs.reduce((a, b) => a + b, 0) / fixedPriceJobs.length;
             avgRateValue = `~$${averagePrice.toFixed(2)}`;
             avgRateIcon = proposalsWarningIcon;
+            avgRateTooltipText = 'متوسط السعر الثابت للمشاريع الظاهرة. لمزيد من الدقة، اعرض تاريخ العميل بالكامل.';
         } else {
+            // If no hourly and no fixed, keep default label and show N/A
             avgRateValue = 'N/A';
             avgRateIcon = paymentNotVerifiedIcon;
+            avgRateTooltipText = 'لا يتوفر متوسط سعر للساعة، ولا يوجد تاريخ لمشاريع بسعر ثابت يمكن التقييم بناءً عليه.';
         }
+    }
+    let avgRateIconWithTooltip = '';
+    if (avgRateIcon) {
+        avgRateIconWithTooltip = `<span class="tooltip-container">${avgRateIcon}<span class="tooltip-text">${avgRateTooltipText}</span></span>`;
     }
 
     let jobAgeIcon = '';
@@ -336,6 +356,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (jobAgeLowerCase.includes('minute') || jobAgeLowerCase.includes('now') || jobAgeLowerCase.includes('1 hour')) {
         jobAgeIcon = paymentVerifiedIcon;
         jobAgeTooltipText = 'هذه الوظيفة حديثة جدًا، مما يزيد من فرصة أن تكون أول المتقدمين.';
+    } else if (jobAgeLowerCase.includes('day ago') || jobAgeLowerCase.includes('days ago')) {
+        jobAgeIcon = paymentNotVerifiedIcon;
+        jobAgeTooltipText = 'مر على نشر هذه الوظيفة يوم أو أكثر. فرصة التقديم شبه معدومة.';
+    } else if (jobAgeLowerCase.includes('week')) {
+        jobAgeIcon = paymentNotVerifiedIcon;
+        jobAgeTooltipText = 'وظيفة قديمة تم نشرها منذ أسبوع أو أكثر. لا تقدم.';
+    } else if (jobAgeLowerCase.includes('month') || jobAgeLowerCase.includes('year')) {
+        jobAgeIcon = paymentNotVerifiedIcon;
+        jobAgeTooltipText = 'وظيفة قديمة جدًا. على الأغلب تم توظيف شخص بالفعل أو تم إلغاؤها.';
     }
 
     let jobAgeIconWithTooltip = '';
@@ -533,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <dt>Total Spent</dt><dd>${data.totalSpent || 'N/A'} ${totalSpentIconWithTooltip}</dd>
           <dt>Jobs Posted</dt><dd>${data.jobsPosted || 'N/A'} ${jobsPostedIconWithTooltip}</dd>
           <dt>Hire Rate</dt><dd>${data.hireRate || 'N/A'} (${data.openJobs || 'N/A'} open) ${hireRateIconWithTooltip}</dd>
-          <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIcon}</dd>
+          <dt>${avgRateLabel}</dt><dd>${avgRateValue} ${avgRateIconWithTooltip}</dd>
           <dt>Member Since</dt><dd>${data.memberSince || 'N/A'} ${memberSinceIconWithTooltip}</dd>
         </dl>
         <h4>Client Recent History (${(data.clientHistory || []).length})</h4>
