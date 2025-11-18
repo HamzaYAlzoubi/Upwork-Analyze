@@ -397,3 +397,75 @@ dd {
   height: 12px;
   fill: currentColor;
 }
+
+/* --- Currency Input Field --- */
+.currency-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-input-container .currency-symbol {
+  position: absolute;
+  left: 12px;
+  color: #999;
+  pointer-events: none; /* So you can click through it */
+}
+
+.currency-input-container input[type="text"] {
+  width: 100%;
+  padding: 8px 30px 8px 24px; /* Top, Right (for clear btn), Bottom, Left (for $) */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box; /* Important for padding and width calculation */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.currency-input-container input[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(20, 168, 0, 0.2);
+}
+
+.currency-input-container .clear-specific-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.currency-input-container .clear-specific-btn:hover {
+  color: #333;
+}
+
+/* --- Mismatched Qualifications Section (Modern Design) --- */
+.mismatch-section {
+  /* Inherits card styles from .data-section */
+  background-color: rgba(217, 48, 37, 0.05); /* Very subtle red tint */
+  border: 1px solid #f5c1bd; /* Lighter red border */
+  border-left: 4px solid #d93025; /* Strong left accent border */
+  padding-left: 12px; /* Adjust padding to account for the thicker border */
+}
+.mismatch-section h3 {
+  color: #b62c21; /* Darker red for the title */
+  border-bottom: none; /* Remove the heavy bottom border */
+  margin-bottom: 8px; /* Reduce space below header */
+}
+.mismatch-list {
+  list-style-type: none;
+  padding-left: 0;
+  margin: 0;
+}
+.mismatch-item {
+  color: #521813; /* Darker text for better readability */
+  font-weight: 500;
+  padding: 6px 0; /* More vertical spacing */
+}

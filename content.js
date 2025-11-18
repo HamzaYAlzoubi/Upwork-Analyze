@@ -189,70 +189,96 @@ function extractJobData() {
   const jobDeadline = getText('li:has([data-cy="calendar-time"]) strong');
 
   const recentHistoryItems = Array.from(document.querySelectorAll('[data-cy="job"].item'));
-  const clientHistory = recentHistoryItems.map(item => {
-    const projectTitle = getText('[data-cy="job-title"]', item);
-    const freelancerName = getText('a[href*="/freelancers/"]', item);
-    
-    const clientFeedbackElement = item.querySelector('.text-body-sm.mt-2x.mb-2x');
-    let clientFeedback = 'No feedback given';
-    if (clientFeedbackElement && !clientFeedbackElement.innerText.includes('To freelancer:')) {
-        clientFeedback = clientFeedbackElement.innerText.trim();
+      const clientHistory = recentHistoryItems.map(item => {
+      const projectTitle = getText('[data-cy="job-title"]', item);
+      const freelancerName = getText('a[href*="/freelancers/"]', item);
+      
+      const clientFeedbackElement = item.querySelector('.text-body-sm.mt-2x.mb-2x');
+      let clientFeedback = 'No feedback given';
+      if (clientFeedbackElement && !clientFeedbackElement.innerText.includes('To freelancer:')) {
+          clientFeedback = clientFeedbackElement.innerText.trim();
+      }
+  
+      const freelancerFeedbackElement = findElementByText('.text-body-sm', 'To freelancer:', item);
+      let freelancerFeedback = 'N/A';
+      if (freelancerFeedbackElement) {
+          const feedbackTextElement = freelancerFeedbackElement.querySelector('.air3-truncation span');
+          if(feedbackTextElement) {
+              freelancerFeedback = feedbackTextElement.innerText.trim();
+          }
+      }
+  
+      const dateEl = item.querySelector('[data-cy="date"] .text-body-sm');
+      const jobDate = dateEl ? dateEl.innerText.trim().replace(/\n/g, '') : 'N/A';
+      
+      const statsEl = item.querySelector('[data-cy="stats"]');
+      let jobPrice = 'N/A';
+      if (statsEl) {
+        jobPrice = statsEl.innerText.trim().replace(/\n/g, ' ');
+      }
+  
+      return {
+        projectTitle,
+        freelancerName,
+        clientFeedback,
+        freelancerFeedback,
+        jobDate, // New field for date
+        jobPrice
+      };
+    });
+  
+    // --- Scrape Mismatched Qualifications ---
+    const qualificationMismatches = [];
+    const qualificationsSection = Array.from(document.querySelectorAll('h5')).find(h => h.innerText.trim() === 'Preferred qualifications');
+    if (qualificationsSection) {
+      const qualificationsList = qualificationsSection.nextElementSibling;
+      if (qualificationsList && qualificationsList.matches('ul.qualification-items')) {
+        const qualificationItems = qualificationsList.querySelectorAll('li');
+        qualificationItems.forEach(item => {
+          const mismatchIcon = item.querySelector('div.text-danger svg path[d="M12 6.77v7.41m0 2.81v.24M21 12a9 9 0 11-18 0 9 9 0 0118 0z"]');
+          if (mismatchIcon) {
+            const strongEl = item.querySelector('strong');
+            let text = '';
+            if (strongEl) {
+              text = strongEl.innerText.trim();
+              const valueEl = strongEl.nextElementSibling;
+              if (valueEl && valueEl.tagName === 'SPAN') {
+                text += ` ${valueEl.innerText.trim()}`;
+              }
+              qualificationMismatches.push(text);
+            }
+          }
+        });
+      }
     }
-
-    const freelancerFeedbackElement = findElementByText('.text-body-sm', 'To freelancer:', item);
-    let freelancerFeedback = 'N/A';
-    if (freelancerFeedbackElement) {
-        const feedbackTextElement = freelancerFeedbackElement.querySelector('.air3-truncation span');
-        if(feedbackTextElement) {
-            freelancerFeedback = feedbackTextElement.innerText.trim();
-        }
-    }
-
-    const dateEl = item.querySelector('[data-cy="date"] .text-body-sm');
-    const jobDate = dateEl ? dateEl.innerText.trim().replace(/\n/g, '') : 'N/A';
-    
-    const statsEl = item.querySelector('[data-cy="stats"]');
-    let jobPrice = 'N/A';
-    if (statsEl) {
-      jobPrice = statsEl.innerText.trim().replace(/\n/g, ' ');
-    }
-
+  
     return {
-      projectTitle,
-      freelancerName,
-      clientFeedback,
-      freelancerFeedback,
-      jobDate, // New field for date
-      jobPrice
+      jobTitle,
+      fullJobDescription,
+      jobType,
+      budgetOrRate,
+      postedTime: jobAge,
+      lastViewed,
+      proposals: proposalsCount,
+      interviewing,
+      invitesSent,
+      hires,
+      paymentVerified,
+      location: clientLocation,
+      experienceLevel,
+      memberSince: clientJoinDate,
+      hireRate: clientHireRate,
+      jobsPosted: clientJobsPosted,
+      openJobs,
+      avgHourlyRate,
+      totalHours,
+      totalSpent,
+      rating: clientRating,
+      reviewsCount: clientReviewsCount,
+      connects: requiredConnects,
+      availableConnects,
+      jobDeadline,
+      clientHistory,
+      qualificationMismatches
     };
-  });
-
-  return {
-    jobTitle,
-    fullJobDescription,
-    jobType,
-    budgetOrRate,
-    postedTime: jobAge,
-    lastViewed,
-    proposals: proposalsCount,
-    interviewing,
-    invitesSent,
-    hires,
-    paymentVerified,
-    location: clientLocation,
-    experienceLevel,
-    memberSince: clientJoinDate,
-    hireRate: clientHireRate,
-    jobsPosted: clientJobsPosted,
-    openJobs,
-    avgHourlyRate,
-    totalHours,
-    totalSpent,
-    rating: clientRating,
-    reviewsCount: clientReviewsCount,
-    connects: requiredConnects,
-    availableConnects,
-    jobDeadline,
-    clientHistory
-  };
-}
+  }

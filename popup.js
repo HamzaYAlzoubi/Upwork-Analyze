@@ -92,11 +92,33 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function renderJobData(data) {
+    const idealClientCriteria = {
+        rating: 5,
+        reviewsCount: 35,
+        memberSinceMonths: 24,
+        avgHourlyRate: 30,
+        totalSpent: 100000,
+        jobsPosted: 50,
+        hireRate: 90
+    };
+
+    const legendaryClientCriteria = {
+        rating: 5,
+        reviewsCount: 100,
+        memberSinceMonths: 60,
+        avgHourlyRate: 60,
+        totalSpent: 500000,
+        jobsPosted: 100,
+        hireRate: 100
+    };
+
     const userExperience = localStorage.getItem('userExperienceLevel');
     const paymentVerifiedIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="var(--icon-color, #14a800)" fill-rule="evenodd" vector-effect="non-scaling-stroke" stroke="var(--icon-color, #14a800)" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M20.4 13.1c.8 1 .3 2.5-.9 2.9-.8.2-1.3 1-1.3 1.8 0 1.3-1.2 2.2-2.5 1.8-.8-.3-1.7 0-2.1.7-.7 1.1-2.3 1.1-3 0-.5-.7-1.3-1-2.1-.7-1.4.4-2.6-.6-2.6-1.8 0-.8-.5-1.6-1.3-1.8-1.2-.4-1.7-1.8-.9-2.9.5-.7.5-1.6 0-2.2-.9-1-.4-2.5.9-2.9.8-.2 1.3-1 1.3-1.8C5.9 5 7.1 4 8.3 4.5c.8.3 1.7 0 2.1-.7.7-1.1 2.3-1.1 3 0 .5.7 1.3 1 2.1.7 1.4-.5 2.6.5 2.6 1.7 0 .8.5 1.6 1.3 1.8 1.2.4 1.7 1.8.9 2.9-.4.6-.4 1.6.1 2.2z" clip-rule="evenodd"></path><path vector-effect="non-scaling-stroke" stroke="var(--icon-color-bg, #fff)" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M15.5 9.7L11 14.3l-2.5-2.5"></path></svg>`;
     const paymentNotVerifiedIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#d93025" fill-rule="evenodd" vector-effect="non-scaling-stroke" stroke="#d93025" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M20.4 13.1c.8 1 .3 2.5-.9 2.9-.8.2-1.3 1-1.3 1.8 0 1.3-1.2 2.2-2.5 1.8-.8-.3-1.7 0-2.1.7-.7 1.1-2.3 1.1-3 0-.5-.7-1.3-1-2.1-.7-1.4.4-2.6-.6-2.6-1.8 0-.8-.5-1.6-1.3-1.8-1.2-.4-1.7-1.8-.9-2.9.5-.7.5-1.6 0-2.2-.9-1-.4-2.5.9-2.9.8-.2 1.3-1 1.3-1.8C5.9 5 7.1 4 8.3 4.5c.8.3 1.7 0 2.1-.7.7-1.1 2.3-1.1 3 0 .5.7 1.3 1 2.1.7 1.4-.5 2.6.5 2.6 1.7 0 .8.5 1.6 1.3 1.8 1.2.4 1.7 1.8.9 2.9-.4.6-.4 1.6.1 2.2z" clip-rule="evenodd"></path><path vector-effect="non-scaling-stroke" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M15 9l-6 6m0-6l6 6"></path></svg>`;
     const proposalsWarningIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><path fill="#ffc107" fill-rule="evenodd" vector-effect="non-scaling-stroke" stroke="#ffc107" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="1.5" d="M20.4 13.1c.8 1 .3 2.5-.9 2.9-.8.2-1.3 1-1.3 1.8 0 1.3-1.2 2.2-2.5 1.8-.8-.3-1.7 0-2.1.7-.7 1.1-2.3 1.1-3 0-.5-.7-1.3-1-2.1-.7-1.4.4-2.6-.6-2.6-1.8 0-.8-.5-1.6-1.3-1.8-1.2-.4-1.7-1.8-.9-2.9.5-.7.5-1.6 0-2.2-.9-1-.4-2.5.9-2.9.8-.2 1.3-1 1.3-1.8C5.9 5 7.1 4 8.3 4.5c.8.3 1.7 0 2.1-.7.7-1.1 2.3-1.1 3 0 .5.7 1.3 1 2.1.7 1.4-.5 2.6.5 2.6 1.7 0 .8.5 1.6 1.3 1.8 1.2.4 1.7 1.8.9 2.9-.4.6-.4 1.6.1 2.2z" clip-rule="evenodd"></path><path vector-effect="non-scaling-stroke" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2" d="M12 8v6m0 3v.01"></path></svg>`;
-    const icons = { paymentVerifiedIcon, paymentNotVerifiedIcon, proposalsWarningIcon };
+    const idealClientIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><defs><linearGradient id="ideal-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFD700;" /><stop offset="100%" style="stop-color:#B8860B;" /></linearGradient></defs><path fill="url(#ideal-gradient)" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path fill="#fff" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+    const legendaryClientIcon = `<svg width="40" height="40" viewBox="0 0 24 24" role="img" aria-hidden="true" style="vertical-align: middle;"><defs><linearGradient id="legendary-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#A020F0;"/><stop offset="100%" style="stop-color:#4B0082;"/></linearGradient></defs><path fill="url(#legendary-gradient)" d="M12 1L2 8.5V15.5L12 23L22 15.5V8.5L12 1Z"/><path d="M10.5 7.5 L 10.5 14.5 L 14.5 14.5" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const icons = { paymentVerifiedIcon, paymentNotVerifiedIcon, proposalsWarningIcon, idealClientIcon, legendaryClientIcon };
 
     let historyHtml = (data.clientHistory || []).map(item => `
       <div class="history-item">
@@ -121,9 +143,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (upperLimit <= 15) {
                 proposalsIcon = paymentVerifiedIcon; // GREEN
                 proposalsTooltipText = 'عدد المتقدمين منخفض، فرصة جيدة للتقديم.';
-            } else if (upperLimit > 15 && upperLimit <= 50) {
+            } else if (upperLimit <= 20) {
                 proposalsIcon = proposalsWarningIcon; // YELLOW
-                proposalsTooltipText = 'عدد المتقدمين متوسط إلى مرتفع جدا٬ لكن لا تزال هناك فرصة ٬ قدم بحذر';
+                proposalsTooltipText = 'عدد المتقدمين متوسط، والمنافسة بدأت تزيد. قدم بحذر.';
+            } else if (upperLimit <= 50) {
+                proposalsIcon = proposalsWarningIcon; // YELLOW
+                proposalsTooltipText = 'عدد المتقدمين متوسط إلى مرتفع جدًا، لكن لا تزال هناك فرصة. قدم بحذر.';
             }
         }
     }
@@ -157,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let clientRatingIconWithTooltip = '';
     if (data.rating === 'N/A') {
-        clientRatingIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">لا يوجد تقييم للعميل. كن حذرًا.</span></span>`;
+        clientRatingIconWithTooltip = `<span class="tooltip-container">${paymentNotVerifiedIcon}<span class="tooltip-text">عميل جديد تمامًا بدون تقييمات. أعلى درجة من المخاطرة.</span></span>`;
     } else {
         const ratingValue = parseFloat(data.rating);
         const reviewsCountMatch = (data.reviewsCount || '').match(/(\d+)/);
@@ -166,21 +191,34 @@ document.addEventListener('DOMContentLoaded', () => {
         let tooltipText = '';
         const readReviewsAdvice = ' نصيحة: اقرأ المراجعات دائمًا قبل التقديم.';
 
-        if (ratingValue === 5 && reviewsCount > 35) {
-            icon = paymentVerifiedIcon;
-            tooltipText = 'عميل مثالي بتقييم 5 نجوم وعدد كبير من المراجعات. فرصة ذهبية للعمل معه!';
-        } else if (ratingValue === 5 && reviewsCount <= 35) {
-            icon = paymentVerifiedIcon;
-            tooltipText = 'تقييم العميل ممتاز ولديه عدد كافٍ من المراجعات. مؤشر إيجابي للغاية.';
-        } else if (ratingValue >= 4.5 && ratingValue < 5) {
-            icon = paymentVerifiedIcon;
-            tooltipText = 'تقييم العميل جيد جدًا، لكنه ليس مثاليًا.' + readReviewsAdvice;
-        } else if (ratingValue >= 4.1 && ratingValue < 4.5) {
-            icon = proposalsWarningIcon;
-            tooltipText = 'العميل لديه مراجعات سيئة سابقة. قدم فقط إذا كنت تعرف ما تفعل وبحذر شديد.' + readReviewsAdvice;
-        } else if (ratingValue < 4.1) {
-            icon = paymentNotVerifiedIcon;
-            tooltipText = 'تقييم العميل منخفض جدًا. يمثل مخاطرة عالية. لا تقدم إلا للضرورة القصوى.' + readReviewsAdvice;
+        // --- NEW RULE 1 (HIGHEST PRIORITY) ---
+        if (reviewsCount <= 5) {
+            icon = paymentNotVerifiedIcon; // RED
+            tooltipText = 'عدد المراجعات قليل جدًا. من الصعب الحكم على العميل بشكل دقيق. تعامل بحذر شديد.';
+        } 
+        // --- NEW RULE 2 (SECOND PRIORITY) ---
+        else if (ratingValue === 5 && reviewsCount < 10) {
+            icon = proposalsWarningIcon; // YELLOW
+            tooltipText = 'تقييم العميل ممتاز، لكن عدد المراجعات لا يزال منخفضًا. مؤشر جيد ولكن يتطلب الحذر.';
+        } 
+        // --- ORIGINAL LOGIC (FALLBACK) ---
+        else {
+            if (ratingValue === 5 && reviewsCount > 35) {
+                icon = paymentVerifiedIcon;
+                tooltipText = 'عميل مثالي بتقييم 5 نجوم وعدد كبير من المراجعات. فرصة ذهبية للعمل معه!';
+            } else if (ratingValue === 5 && reviewsCount <= 35) { // This now implicitly means reviewsCount is between 10 and 35
+                icon = paymentVerifiedIcon;
+                tooltipText = 'تقييم العميل ممتاز ولديه عدد كافٍ من المراجعات. مؤشر إيجابي للغاية.';
+            } else if (ratingValue >= 4.5 && ratingValue < 5) {
+                icon = paymentVerifiedIcon;
+                tooltipText = 'تقييم العميل جيد جدًا، لكنه ليس مثاليًا.' + readReviewsAdvice;
+            } else if (ratingValue >= 4.1 && ratingValue < 4.5) {
+                icon = proposalsWarningIcon;
+                tooltipText = 'العميل لديه مراجعات سيئة سابقة. قدم فقط إذا كنت تعرف ما تفعل وبحذر شديد.' + readReviewsAdvice;
+            } else if (ratingValue < 4.1) {
+                icon = paymentNotVerifiedIcon;
+                tooltipText = 'تقييم العميل منخفض جدًا. يمثل مخاطرة عالية. لا تقدم إلا للضرورة القصوى.' + readReviewsAdvice;
+            }
         }
         
         if (icon) {
@@ -402,17 +440,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if ((data.jobType || '').toLowerCase().includes('hourly')) {
         let jobRate = 0;
+        let isAverage = false;
         const rateNumbers = (data.budgetOrRate || '').match(/\d+\.?\d*/g);
         if (rateNumbers) {
             const rates = rateNumbers.map(n => parseFloat(n));
             if (rates.length > 1) {
                 jobRate = (rates[0] + rates[1]) / 2;
+                isAverage = true;
             } else if (rates.length === 1) {
                 jobRate = rates[0];
             }
         }
         if (jobRate > 0) {
-            const evalResult = getHourlyRateEvaluation(jobRate, data.experienceLevel, icons);
+            const userPreferredRate = parseFloat(localStorage.getItem('userPreferredRate')) || 0;
+            const evalResult = getHourlyRateEvaluation(jobRate, data.experienceLevel, icons, userPreferredRate, isAverage);
             budgetIcon = evalResult.icon;
             budgetTooltipText = evalResult.tooltip;
         }
@@ -530,6 +571,21 @@ document.addEventListener('DOMContentLoaded', () => {
         jobTypeIconWithTooltip = `<span class="tooltip-container">${jobTypeIcon}<span class="tooltip-text">${jobTypeTooltip}</span></span>`;
     }
 
+    let mismatchesHtml = '';
+    if (data.qualificationMismatches && data.qualificationMismatches.length > 0) {
+      const mismatchItems = data.qualificationMismatches.map(item => 
+        `<li class="mismatch-item">${item}</li>`
+      ).join('');
+      mismatchesHtml = `
+        <div class="data-section mismatch-section">
+          <h3><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="vertical-align: -3px; margin-right: 8px;"><path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/></svg>Mismatched Qualifications</h3>
+          <ul class="mismatch-list">
+            ${mismatchItems}
+          </ul>
+        </div>
+      `;
+    }
+
     analysisResultsDiv.innerHTML = `
       <div class="data-section">
         <h3>Job Details</h3>
@@ -547,6 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${invitesSentHtml}
           ${hiresHtml}
         </dl>
+        ${mismatchesHtml}
         <h4>Full Job Description</h4>
         <div class="description-box">
           <p id="full-description">${data.fullJobDescription || 'N/A'}</p>
@@ -810,7 +867,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
         
 
-          function getHourlyRateEvaluation(rate, experienceLevel, icons) {
+          function getHourlyRateEvaluation(rate, experienceLevel, icons, userPreferredRate, isAverage) {
+            const baseEval = performBaseRateEvaluation(rate, experienceLevel, icons);
+            const { paymentVerifiedIcon, proposalsWarningIcon } = icons;
+            const prefix = isAverage ? 'متوسط ' : '';
+
+            if (userPreferredRate && userPreferredRate > 0) {
+                if (rate >= userPreferredRate) {
+                    if (baseEval.icon === paymentVerifiedIcon) {
+                        return { 
+                            icon: baseEval.icon, 
+                            tooltip: baseEval.tooltip + ' وهو ايضا ما تبحث عنه.' 
+                        };
+                    } else {
+                        return { 
+                            icon: paymentVerifiedIcon, 
+                            tooltip: `${prefix}سعر الساعة في هذه الوظيفة (${rate}$) يطابق أو يتجاوز السعر الذي تفضله.`
+                        };
+                    }
+                } else {
+                    return { 
+                        icon: proposalsWarningIcon, 
+                        tooltip: `${prefix}معدل الساعة المقترح (${rate}$) أقل من السعر المفضل لديك (${userPreferredRate}$).`
+                    };
+                }
+            }
+            return baseEval;
+          }
+
+          function performBaseRateEvaluation(rate, experienceLevel, icons) {
             const { paymentVerifiedIcon, proposalsWarningIcon, paymentNotVerifiedIcon } = icons;
             const isExpert = experienceLevel.toLowerCase().includes('expert');
             let icon = '';
@@ -963,18 +1048,66 @@ ${historyText}
     });
   });
 
+  // --- Preferred Rate Logic ---
+  const preferredRateInput = document.getElementById('preferred-rate');
+  const clearRateBtn = document.getElementById('clear-rate-btn');
+
+  // Function to show/hide clear button based on input value
+  const toggleClearRateButton = () => {
+    if (preferredRateInput.value) {
+      clearRateBtn.style.display = 'block';
+    } else {
+      clearRateBtn.style.display = 'none';
+    }
+  };
+
+  // Load saved preferred rate and set initial button visibility
+  const savedPreferredRate = localStorage.getItem('userPreferredRate');
+  if (savedPreferredRate) {
+    preferredRateInput.value = savedPreferredRate;
+  }
+  toggleClearRateButton(); // Set initial state
+
+  // Save preferred rate and validate input
+  preferredRateInput.addEventListener('input', (event) => {
+    // Allow only numbers and one decimal point
+    let value = event.target.value;
+    value = value.replace(/[^0-9.]/g, ''); // Remove non-numeric/non-dot characters
+    const parts = value.split('.');
+    if (parts.length > 2) { // If more than one dot
+      value = parts[0] + '.' + parts.slice(1).join('');
+    }
+    event.target.value = value;
+    
+    localStorage.setItem('userPreferredRate', value);
+    toggleClearRateButton();
+  });
+
+  // Clear preferred rate
+  clearRateBtn.addEventListener('click', () => {
+    localStorage.removeItem('userPreferredRate');
+    preferredRateInput.value = '';
+    toggleClearRateButton();
+    preferredRateInput.focus(); // For better UX
+  });
+
   // --- Clear Selections Logic ---
   const clearProfileBtn = document.getElementById('clear-profile-btn');
   clearProfileBtn.addEventListener('click', () => {
     // Clear from localStorage
     localStorage.removeItem('userExperienceLevel');
     localStorage.removeItem('userJobTypePreference');
+    localStorage.removeItem('userPreferredRate');
 
     // Uncheck all radio buttons
     const allRadios = document.querySelectorAll('#profile-modal input[type="radio"]');
     allRadios.forEach(radio => {
       radio.checked = false;
     });
+
+    // Clear the rate input
+    preferredRateInput.value = '';
+    toggleClearRateButton();
   });
 
 });
