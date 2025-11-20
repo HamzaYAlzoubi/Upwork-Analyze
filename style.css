@@ -532,5 +532,25 @@ dd {
 }
 
 .tooltip-text li {
+
   padding: 2px 0;
+
+}
+
+
+
+.score-status-icon {
+
+  width: 20px;
+
+  height: 20px;
+
+  vertical-align: -5px;
+
+  margin-right: 5px;
+
+}
+
+.score-promising .score-value {
+  color: var(--primary-color); /* Use primary green for promising score */
 }

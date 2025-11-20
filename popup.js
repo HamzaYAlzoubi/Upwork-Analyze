@@ -91,6 +91,143 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function calculateClientScore(data) {
+    // --- Parse data into usable formats ---
+    const rating = parseFloat(data.rating); // Becomes NaN for "N/A"
+    const reviewsCount = parseInt((data.reviewsCount || '').match(/(\d+)/)?.[1] || 0);
+    const totalSpent = parseMoney(data.totalSpent);
+    const hireRate = parseInt((data.hireRate || '').replace('%', '')); // Becomes NaN for "N/A"
+    const jobsPosted = parseInt(data.jobsPosted); // Becomes NaN for "N/A"
+    const avgHourlyRate = parseMoney(data.avgHourlyRate);
+    const hires = parseInt(data.hires); // Becomes NaN for "N/A"
+
+    let memberSinceMonths = 0;
+    if (data.memberSince && data.memberSince !== 'N/A') {
+      const joinDate = new Date(data.memberSince);
+      if (!isNaN(joinDate)) {
+        const currentDate = new Date();
+        memberSinceMonths = (currentDate.getFullYear() - joinDate.getFullYear()) * 12 + (currentDate.getMonth() - joinDate.getMonth());
+      }
+    }
+
+    const hasHistoryWithFixedPrice = (data.clientHistory || []).some(item => {
+        if (item.jobPrice && (item.jobPrice || '').toLowerCase().includes('fixed-price')) {
+            const match = item.jobPrice.match(/\$([\d,]+\.?\d*)/);
+            return match && match[1];
+        }
+        return false;
+    });
+
+    // --- Stricter criteria for Promising New Client, including minimum rate ---
+    const isPromisingNewClient = memberSinceMonths < 6 && hireRate === 100 && rating === 5.0 && avgHourlyRate >= 10;
+
+    // --- Level 1: Calculate all potential deal-breakers (Red) ---
+    const dangerReasons = [];
+    if (data.paymentVerified === 'No') dangerReasons.push('طريقة الدفع غير موثقة');
+    if (totalSpent === 0) dangerReasons.push('الإنفاق صفر (عميل جديد تمامًا)');
+    if (isNaN(rating)) dangerReasons.push('لا يوجد تقييم للعميل');
+    if (isNaN(hireRate) || hireRate === 0) dangerReasons.push('لا يوجد معدل توظيف أو أنه 0%');
+    if (isNaN(jobsPosted)) dangerReasons.push('لا يوجد تاريخ لعدد الوظائف المنشورة');
+    if (!isNaN(hireRate) && hireRate < 70 && !isNaN(jobsPosted) && jobsPosted > 5) dangerReasons.push('معدل التوظيف منخفض جدًا');
+    if (!isNaN(rating) && rating < 4.0) dangerReasons.push('تقييم العميل منخفض جدًا');
+    if (avgHourlyRate > 0 && avgHourlyRate < 9) dangerReasons.push('متوسط سعر الساعة منخفض جداً');
+
+    // --- Level 2: Calculate all potential warnings (Yellow) ---
+    const warningReasons = [];
+    if (isPromisingNewClient) {
+        // This client gets a special, single "warning"
+        warningReasons.push('عميل واعد بمؤشرات مثالية، لكنه يمثل خطورة عالية جدًا لعدم وجود تاريخ حقيقي له. تعامل معه كعميل جديد تمامًا.');
+    } else {
+        // --- General warnings for non-promising clients ---
+        if (totalSpent > 0 && totalSpent < 5000) warningReasons.push('إجمالي الإنفاق أقل من 5 آلاف');
+
+        const ratingIsWeak = !isNaN(rating) && rating >= 4.0 && rating < 4.6;
+        const reviewsAreLow = reviewsCount < 10 && reviewsCount > 0;
+        if (ratingIsWeak && reviewsAreLow) warningReasons.push('تقييم العميل ضعيف نوعا ما وعدد المراجعات قليل');
+        else if (ratingIsWeak) warningReasons.push('تقييم العميل ضعيف نوعا ما');
+        else if (reviewsAreLow) warningReasons.push(rating === 5 ? 'عدد المراجعات قليل على الرغم من التقييم الكامل' : 'عدد المراجعات قليل');
+
+        const hireRateIsMid = !isNaN(hireRate) && hireRate >= 60 && hireRate <= 85;
+        const hireRateIsHighOnFewJobs = !isNaN(hireRate) && hireRate > 85 && !isNaN(jobsPosted) && jobsPosted <= 5;
+        if (hireRateIsMid) warningReasons.push('معدل توظيف العميل ليس مرتفعًا');
+        else if (hireRateIsHighOnFewJobs) warningReasons.push('معدل التوظيف عالٍ لكن لعدد قليل من الوظائف');
+        
+        if (!isNaN(hireRate) && hireRate < 60) warningReasons.push('معدل التوظيف منخفض جدًا');
+        if (!isNaN(jobsPosted) && jobsPosted <= 5) warningReasons.push('لديه عدد قليل من الوظائف السابقة');
+        
+        // Tiered rate warnings
+        if (avgHourlyRate >= 9 && avgHourlyRate < 10) {
+            warningReasons.push('متوسط سعر الساعة منخفض');
+        } else if (avgHourlyRate >= 10 && avgHourlyRate <= 15) {
+            warningReasons.push('متوسط سعر الساعة مقبول ولكنه ليس مرتفعًا');
+        }
+        
+        if (avgHourlyRate === 0 && !hasHistoryWithFixedPrice) warningReasons.push('لا يتوفر متوسط سعر للساعة أو تاريخ لمشاريع بسعر ثابت للتقييم');
+        if (memberSinceMonths < 3) warningReasons.push('العميل جديد على المنصة');
+    }
+
+    const uniqueDangerReasons = [...new Set(dangerReasons)];
+    const uniqueWarningReasons = [...new Set(warningReasons)];
+
+    // --- Final Evaluation: Check for Dangers First ---
+    if (uniqueDangerReasons.length > 0) {
+      let score;
+      if (uniqueDangerReasons.length >= 3) score = 0.0;
+      else if (uniqueDangerReasons.length === 2) score = 1.0;
+      else score = 2.0;
+      // As requested, combine danger and warning reasons in the tooltip for danger status
+      const allReasons = [...uniqueDangerReasons, ...uniqueWarningReasons];
+      return { score: score, status: 'danger', reasons: [...new Set(allReasons)] };
+    }
+
+    // --- If no dangers, proceed with normal/warning/promising logic ---
+    let score = 5.0;
+    let status = 'normal';
+
+    if (isPromisingNewClient) {
+        status = 'promising';
+    } else if (uniqueWarningReasons.length > 0) {
+        status = 'warning';
+    }
+
+    // --- Level 3: Point-based Scoring ---
+    if (data.paymentVerified === 'Yes') score += 1.5;
+    
+    if (!isNaN(rating)) {
+        if (rating >= 4.9 && reviewsCount >= 20) score += 2.0;
+        else if (rating >= 4.7 && reviewsCount >= 10) score += 1.0;
+        else if (rating < 4.5) score -= 1.5;
+    }
+    if (reviewsCount < 5 && !isPromisingNewClient) score -= 1.0;
+
+    if (totalSpent > 50000) score += 1.5;
+    else if (totalSpent > 10000) score += 1.0;
+    else if (totalSpent > 5000) score += 0.5;
+    else if (totalSpent > 0 && totalSpent <= 5000 && !isPromisingNewClient) score -= 1.0;
+
+    if (!isNaN(hireRate) && !isNaN(jobsPosted)) {
+        if (hireRate >= 80 && jobsPosted >= 10) score += 1.0;
+        else if (hireRate >= 50) score += 0.5;
+    }
+    
+    if (memberSinceMonths > 24) score += 1.0;
+    else if (memberSinceMonths > 12) score += 0.5;
+
+    if (avgHourlyRate > 40) {
+        score += 1.0;
+    } else if (avgHourlyRate >= 10 && avgHourlyRate < 15) {
+        score -= 1.0;
+    } else if (avgHourlyRate > 0 && avgHourlyRate < 10) {
+        score -= 1.5;
+    } else if (avgHourlyRate === 0 && !hasHistoryWithFixedPrice) {
+        score -= 1.5;
+    }
+
+    score = Math.max(0, Math.min(10, score));
+
+    return { score: score, status: status, reasons: uniqueWarningReasons };
+  }
+
   function renderJobData(data) {
     const idealClientCriteria = {
         rating: 5,
@@ -119,6 +256,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const idealClientIcon = `<svg class="verified-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" role="img" aria-hidden="true"><defs><linearGradient id="ideal-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFD700;" /><stop offset="100%" style="stop-color:#B8860B;" /></linearGradient></defs><path fill="url(#ideal-gradient)" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path fill="#fff" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
     const legendaryClientIcon = `<svg width="40" height="40" viewBox="0 0 24 24" role="img" aria-hidden="true" style="vertical-align: middle;"><defs><linearGradient id="legendary-gradient" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#A020F0;"/><stop offset="100%" style="stop-color:#4B0082;"/></linearGradient></defs><path fill="url(#legendary-gradient)" d="M12 1L2 8.5V15.5L12 23L22 15.5V8.5L12 1Z"/><path d="M10.5 7.5 L 10.5 14.5 L 14.5 14.5" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const icons = { paymentVerifiedIcon, paymentNotVerifiedIcon, proposalsWarningIcon, idealClientIcon, legendaryClientIcon };
+
+    const clientScoreResult = calculateClientScore(data);
+
+    const clientScore = clientScoreResult.status === 'danger' ? clientScoreResult.score.toFixed(0) : clientScoreResult.score.toFixed(1);
+    let scoreStatusClass = '';
+    if (clientScoreResult.status === 'danger') {
+      scoreStatusClass = 'score-danger';
+    } else if (clientScoreResult.status === 'warning') {
+      scoreStatusClass = 'score-warning';
+    } else if (clientScoreResult.status === 'promising') {
+      scoreStatusClass = 'score-promising';
+    }
+
+    let scoreTooltipHtml = '';
+    if (clientScoreResult.reasons.length > 0) {
+      const reasonsHtml = clientScoreResult.reasons.map(reason => `<li>- ${reason}</li>`).join('');
+      scoreTooltipHtml = `<span class="tooltip-text"><ul>${reasonsHtml}</ul></span>`;
+    }
+
+    const scoreDisplayClass = `client-score-display ${scoreStatusClass} ${scoreTooltipHtml ? 'tooltip-container' : ''}`.trim();
+
+    let scoreStatusIconHtml = '';
+    let iconSvg = '';
+    if (clientScoreResult.status === 'danger') {
+      iconSvg = paymentNotVerifiedIcon;
+    } else if (clientScoreResult.status === 'warning') {
+      iconSvg = proposalsWarningIcon;
+    } else if (clientScoreResult.status === 'promising') {
+      iconSvg = idealClientIcon;
+    } else {
+      iconSvg = paymentVerifiedIcon;
+    }
+    scoreStatusIconHtml = iconSvg.replace('class="verified-icon"', 'class="verified-icon score-status-icon"');
 
     let historyHtml = (data.clientHistory || []).map(item => `
       <div class="history-item">
@@ -351,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (rateValue > 15) {
             avgRateIcon = paymentVerifiedIcon;
             avgRateTooltipText = 'متوسط سعر الساعة الذي يدفعه العميل جيد جدًا.';
-        } else if (rateValue > 10) {
+        } else if (rateValue >= 10) {
             avgRateIcon = proposalsWarningIcon;
             avgRateTooltipText = 'متوسط سعر الساعة الذي يدفعه العميل مقبول، لكنه ليس مرتفعًا.';
         } else {
@@ -380,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // If no hourly and no fixed, keep default label and show N/A
             avgRateValue = 'N/A';
             avgRateIcon = paymentNotVerifiedIcon;
-            avgRateTooltipText = 'لا يتوفر متوسط سعر للساعة، ولا يوجد تاريخ لمشاريع بسعر ثابت يمكن التقييم بناءً عليه.';
+            avgRateTooltipText = 'لا يمكن حساب متوسط السعر. اعرض تاريخ العميل بالكامل على الصفحة ثم أعد فتح الإضافة لتحليل أعمق.';
         }
     }
     let avgRateIconWithTooltip = '';
@@ -613,9 +783,11 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="data-section">
         <div class="section-header">
           <h3>Client Details</h3>
-          <div class="client-score-display">
-            <span class="score-value">-.--</span>
+          <div class="${scoreDisplayClass}">
+            ${scoreStatusIconHtml}
+            <span class="score-value">${clientScore}</span>
             <span class="score-base">/ 10</span>
+            ${scoreTooltipHtml}
           </div>
         </div>
         <dl>
@@ -786,8 +958,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                       const evalResult = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
 
                                       const contextText = "هذا التقييم يفترض أنك تعمل 4 ساعات يوميًا بناءً على مدة المشروع.";
-
-                                      let finalTooltip = evalResult.tooltip;
+                                      const modifiedTooltip = evalResult.tooltip.replace('المعدل للساعة', 'السعر');
+                                      let finalTooltip = modifiedTooltip;
 
             
 
@@ -801,7 +973,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                                       } else if (evalResult.icon === icons.paymentNotVerifiedIcon) {
 
-                                          finalTooltip = `<strong>${evalResult.tooltip}</strong> ${contextText}`;
+                                          finalTooltip = `<strong>${modifiedTooltip}</strong> ${contextText}`;
 
                                       }
 
