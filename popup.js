@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Stricter criteria for Promising New Client, including minimum rate ---
-    const isPromisingNewClient = memberSinceMonths < 6 && hireRate === 100 && rating === 5.0 && avgHourlyRate >= 10;
+    const isPromisingNewClient = reviewsCount <= 5 && hireRate === 100 && rating === 5.0 && avgHourlyRate >= 10;
 
     // --- Level 1: Calculate all potential deal-breakers (Red) ---
     const dangerReasons = [];
@@ -224,6 +224,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     score = Math.max(0, Math.min(10, score));
+
+    // If score is a perfect 10 but there are warnings, reduce it to 9.
+    if (score === 10 && status === 'warning') {
+        score = 9.0;
+    }
 
     return { score: score, status: status, reasons: uniqueWarningReasons };
   }
@@ -811,237 +816,119 @@ document.addEventListener('DOMContentLoaded', () => {
         
 
                         function evaluateFixedPriceBudget(data, icons, userExperience) {
-                    
-
                           const actualBudget = parseMoney(data.budgetOrRate);
-
                           const avgRateValue = parseMoney(data.avgHourlyRate);
+                          const userMinFixedPrice = parseFloat(localStorage.getItem('userPreferredFixedPrice')) || 0;
 
-            
+                          // --- Step 1: Get Universal Evaluation ---
+                          function getUniversalEvaluation() {
+                              if (actualBudget >= 2500 && avgRateValue > 0 && avgRateValue <= 15) {
+                                  return { icon: icons.proposalsWarningIcon, tooltip: '<strong>الميزانية مرتفعة جدًا مقارنة بمتوسط سعر الساعة الذي يدفعه العميل عادةً، قد يكون الأمر مريبًا.</strong> تحقق من مدة المشروع.' };
+                              }
+                              if (data.jobDeadline && data.jobDeadline !== 'N/A') {
+                                  let durationDays = 0;
+                                  try {
+                                      const deadlineDate = new Date(data.jobDeadline);
+                                      const today = new Date();
+                                      deadlineDate.setHours(0, 0, 0, 0);
+                                      today.setHours(0, 0, 0, 0);
+                                      const diffTime = deadlineDate - today;
+                                      durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                      if (durationDays <= 0) { durationDays = 1; }
+                                  } catch (e) { durationDays = 0; }
 
-                          // --- Priority 1: Suspicious High Budget / Low Avg Rate ---
-
-                          if (actualBudget >= 2500 && avgRateValue > 0 && avgRateValue <= 15) {
-
-                              return {
-
-                                  icon: icons.proposalsWarningIcon,
-
-                                  tooltip: '<strong>الميزانية مرتفعة جدًا مقارنة بمتوسط سعر الساعة الذي يدفعه العميل عادةً، قد يكون الأمر مريبًا.</strong> تحقق من مدة المشروع.'
-
-                              };
-
+                                  if (durationDays > 0) {
+                                      if (durationDays > 30) {
+                                          if (userExperience === 'Entry') return { icon: icons.paymentVerifiedIcon, tooltip: 'الموعد النهائي بعيد، مما يجعله مناسبًا لمستوى خبرتك كمبتدئ.' };
+                                          if (userExperience === 'Intermediate') return { icon: icons.proposalsWarningIcon, tooltip: 'الموعد النهائي بعيد، لكن انتبه فقد تكون الميزانية غير كافية لمستوى خبرتك المتوسط.' };
+                                      }
+                                      const totalHours = durationDays * 4;
+                                      if (totalHours > 0) {
+                                          const impliedRate = actualBudget / totalHours;
+                                          const impliedEval = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
+                                          const contextText = "هذا التقييم يفترض أنك تعمل 4 ساعات يوميًا بناءً على مدة المشروع.";
+                                          let finalTooltip = impliedEval.tooltip;
+                                          if (impliedEval.icon === icons.paymentVerifiedIcon) finalTooltip = `<strong>الميزانية تبدو ممتازة.</strong> ${contextText}`;
+                                          else if (impliedEval.icon === icons.proposalsWarningIcon) finalTooltip = `<strong>الميزانية تبدو مقبولة.</strong> ${contextText}`;
+                                          else if (impliedEval.icon === icons.paymentNotVerifiedIcon) finalTooltip = `<strong>${impliedEval.tooltip.replace('المعدل للساعة', 'السعر')}</strong> ${contextText}`;
+                                          return { icon: impliedEval.icon, tooltip: finalTooltip };
+                                      }
+                                  }
+                              }
+                              if (actualBudget >= 1000) {
+                                  return { icon: icons.paymentVerifiedIcon, tooltip: 'سعر الوظيفة مرتفع وممتاز، ولكن تأكد من المدة الزمنية للمشروع' };
+                              }
+                              return null;
                           }
 
-            
+                          const universalEval = getUniversalEvaluation();
+                          const isPersonallyAcceptable = (userMinFixedPrice === 0 || actualBudget === 0) ? true : actualBudget >= userMinFixedPrice;
 
-                          // --- Priority 2: Deadline-based Logic ---
+                          // --- Step 2: Synthesize Icon and Tooltip ---
+                          const isUniversalRed = universalEval && universalEval.icon === icons.paymentNotVerifiedIcon;
+                          const isPersonalRed = !isPersonallyAcceptable && userMinFixedPrice > 0;
 
-                          if (data.jobDeadline && data.jobDeadline !== 'N/A') {
+                          let finalIcon = universalEval ? universalEval.icon : '';
+                          let finalTooltip = universalEval ? universalEval.tooltip : '';
 
-                    
+                          // --- Priority 1: Handle all Universal Red cases ---
+                          if (isUniversalRed) {
+                              if (isPersonalRed) {
+                                  // Double Red (Universal Red + Personal Red)
+                                  finalTooltip = universalEval.tooltip + " وكما أنه لا يوافق الحد الأدنى لميزانيتك.";
+                              } else if (isPersonallyAcceptable && userMinFixedPrice > 0) {
+                                  // Universal Red + Personal Green
+                                  finalTooltip = universalEval.tooltip + "، ولكن الميزانية الإجمالية بحد ذاتها تناسب حدك الأدنى.";
+                              }
+                              // If just Universal Red (no personal preference), the original tooltip is used.
+                              return { icon: icons.paymentNotVerifiedIcon, tooltip: finalTooltip };
+                          }
 
-                              let durationDays = 0;
+                          // --- Priority 2: Handle Personal Red (when Universal is not Red) ---
+                          if (isPersonalRed) {
+                              finalIcon = icons.paymentNotVerifiedIcon; // Override to RED
 
-                    
-
-                              try {
-
-                    
-
-                                  const deadlineDate = new Date(data.jobDeadline);
-
-                    
-
-                                  const today = new Date();
-
-                    
-
-                                  deadlineDate.setHours(0, 0, 0, 0);
-
-                    
-
-                                  today.setHours(0, 0, 0, 0);
-
-                    
-
-                                  const diffTime = deadlineDate - today;
-
-                    
-
-                                  durationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    
-
-                                  if (durationDays <= 0) {
-
-                    
-
-                                      durationDays = 1; // If due today or in the past, treat as a 1-day project.
-
-                    
-
-                                  }
-
-                    
-
-                              } catch (e) {
-
-                    
-
-                                  durationDays = 0; // On error, ensure we don't proceed with this check.
-
-                    
-
+                              // Case A: No universal rule was triggered (e.g., normal budget)
+                              if (!universalEval) {
+                                  finalTooltip = "الميزانية أقل من الحد الأدنى الذي وضعته.";
+                                  return { icon: finalIcon, tooltip: finalTooltip };
                               }
 
-                    
+                              // Case B: A universal rule was triggered
+                              // Custom message for "Suspicious Budget" + "Personal Red"
+                              if ((universalEval.tooltip || '').includes('مريبًا')) {
+                                  finalTooltip = universalEval.tooltip + " وبالإضافة لذلك، هي أقل من الحد الأدنى الذي تفضله.";
+                                  return { icon: finalIcon, tooltip: finalTooltip };
+                              }
+                              
+                              // Generic message for other "Personal Red" cases (e.g., Universal Green + Personal Red)
+                              let prefix = '';
+                              if (universalEval.icon === icons.paymentVerifiedIcon) {
+                                  prefix = 'على الرغم من أن التقييم العام للميزانية ممتاز، ';
+                              } else if (universalEval.icon === icons.proposalsWarningIcon) {
+                                  // This will now only catch non-suspicious warnings
+                                  prefix = 'على الرغم من وجود ملاحظات على الميزانية، ';
+                              }
+                              finalTooltip = `${prefix}إلا أن الميزانية أقل من الحد الأدنى الذي وضعته.`;
+                              return { icon: finalIcon, tooltip: finalTooltip };
+                          }
 
+                          // --- Priority 3: Augment Green/Yellow or provide Default Green ---
+                          if (isPersonallyAcceptable && userMinFixedPrice > 0) {
+                              if (universalEval) { // It must be Green or Yellow
+                                  if ((universalEval.tooltip || '').includes('مريبًا')) {
+                                      finalTooltip = "السعر يناسبك لكن " + universalEval.tooltip;
+                                  } else {
+                                      finalTooltip += "، وهو سعر يناسبك.";
+                                  }
+                              } else { // No universal rule, but it's acceptable for the user
+                                  finalIcon = icons.paymentVerifiedIcon;
+                                  finalTooltip = "الميزانية تتوافق مع حدك الأدنى للسعر.";
+                              }
+                          }
                           
-
-                    
-
-                              if (durationDays > 0) {
-
-            
-
-                                  // --- Sub-priority A: User Experience Override for Long Deadlines ---
-
-                                  if (durationDays > 30) { // "Far" deadline
-
-                                      if (userExperience === 'Entry') {
-
-                                          return {
-
-                                              icon: icons.paymentVerifiedIcon, // GREEN
-
-                                              tooltip: 'الموعد النهائي بعيد، مما يجعله مناسبًا لمستوى خبرتك كمبتدئ.'
-
-                                          };
-
-                                      }
-
-                                      if (userExperience === 'Intermediate') {
-
-                                          return {
-
-                                              icon: icons.proposalsWarningIcon, // YELLOW
-
-                                              tooltip: 'الموعد النهائي بعيد، لكن انتبه فقد تكون الميزانية غير كافية لمستوى خبرتك المتوسط.'
-
-                                          };
-
-                                      }
-
-                                  }
-
-                    
-
-                                  // --- Sub-priority B: Implied Rate Calculation (Fallback) ---
-
-                                  let dailyHours = 4; // Default
-
-                    
-
-                                  const totalHours = durationDays * dailyHours;
-
-                    
-
-                                  if (totalHours > 0) {
-
-                    
-
-                                      const impliedRate = actualBudget / totalHours;
-
-                    
-
-                                      const evalResult = getHourlyRateEvaluation(impliedRate, data.experienceLevel, icons);
-
-                                      const contextText = "هذا التقييم يفترض أنك تعمل 4 ساعات يوميًا بناءً على مدة المشروع.";
-                                      const modifiedTooltip = evalResult.tooltip.replace('المعدل للساعة', 'السعر');
-                                      let finalTooltip = modifiedTooltip;
-
-            
-
-                                      if (evalResult.icon === icons.paymentVerifiedIcon) {
-
-                                          finalTooltip = `<strong>الميزانية تبدو ممتازة.</strong> ${contextText}`;
-
-                                      } else if (evalResult.icon === icons.proposalsWarningIcon) {
-
-                                          finalTooltip = `<strong>الميزانية تبدو مقبولة.</strong> ${contextText}`;
-
-                                      } else if (evalResult.icon === icons.paymentNotVerifiedIcon) {
-
-                                          finalTooltip = `<strong>${modifiedTooltip}</strong> ${contextText}`;
-
-                                      }
-
-                    
-
-                                      return { icon: evalResult.icon, tooltip: finalTooltip };
-
-                    
-
-                                  }
-
-                    
-
-                              }
-
-                    
-
-                          }
-
-                    
-
-                      
-
-                    
-
-                          // --- Priority 3: Simple High Budget (if other checks failed) ---
-
-                          if (actualBudget >= 1000) {
-
-                    
-
-                              return {
-
-                    
-
-                                  icon: icons.paymentVerifiedIcon,
-
-                    
-
-                                  tooltip: 'سعر الوظيفة مرتفع وممتاز، ولكن تأكد من المدة الزمنية للمشروع'
-
-                    
-
-                              };
-
-                    
-
-                          }
-
-            
-
-                                        // If all checks fail, do nothing.
-
-            
-
-                                  
-
-            
-
-                                        return { icon: '', tooltip: '' };
-
-            
-
-                                  
-
-            
-
-                                      }
+                          return { icon: finalIcon, tooltip: finalTooltip };
+                        }
 
         
 
@@ -1269,6 +1156,43 @@ ${historyText}
     preferredRateInput.focus(); // For better UX
   });
 
+  // --- Preferred Fixed-Price Logic ---
+  const preferredFixedPriceInput = document.getElementById('preferred-fixed-price');
+  const clearFixedPriceBtn = document.getElementById('clear-fixed-price-btn');
+
+  const toggleClearFixedPriceButton = () => {
+    if (preferredFixedPriceInput.value) {
+      clearFixedPriceBtn.style.display = 'block';
+    } else {
+      clearFixedPriceBtn.style.display = 'none';
+    }
+  };
+
+  const savedPreferredFixedPrice = localStorage.getItem('userPreferredFixedPrice');
+  if (savedPreferredFixedPrice) {
+    preferredFixedPriceInput.value = savedPreferredFixedPrice;
+  }
+  toggleClearFixedPriceButton();
+
+  preferredFixedPriceInput.addEventListener('input', (event) => {
+    let value = event.target.value.replace(/[^0-9.]/g, '');
+    const parts = value.split('.');
+    if (parts.length > 2) {
+      value = parts[0] + '.' + parts.slice(1).join('');
+    }
+    event.target.value = value;
+    localStorage.setItem('userPreferredFixedPrice', value);
+    toggleClearFixedPriceButton();
+  });
+
+  clearFixedPriceBtn.addEventListener('click', () => {
+    localStorage.removeItem('userPreferredFixedPrice');
+    preferredFixedPriceInput.value = '';
+    toggleClearFixedPriceButton();
+    preferredFixedPriceInput.focus();
+  });
+
+
   // --- Clear Selections Logic ---
   const clearProfileBtn = document.getElementById('clear-profile-btn');
   clearProfileBtn.addEventListener('click', () => {
@@ -1276,6 +1200,8 @@ ${historyText}
     localStorage.removeItem('userExperienceLevel');
     localStorage.removeItem('userJobTypePreference');
     localStorage.removeItem('userPreferredRate');
+    localStorage.removeItem('userPreferredFixedPrice');
+
 
     // Uncheck all radio buttons
     const allRadios = document.querySelectorAll('#profile-modal input[type="radio"]');
@@ -1286,6 +1212,8 @@ ${historyText}
     // Clear the rate input
     preferredRateInput.value = '';
     toggleClearRateButton();
+    preferredFixedPriceInput.value = '';
+    toggleClearFixedPriceButton();
   });
 
 });
