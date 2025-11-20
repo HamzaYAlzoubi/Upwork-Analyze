@@ -469,3 +469,68 @@ dd {
   font-weight: 500;
   padding: 6px 0; /* More vertical spacing */
 }
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.section-header h3 {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.client-score-display {
+  display: flex;
+  align-items: baseline;
+  font-weight: 600;
+}
+
+.score-value {
+  font-size: 1.4em;
+  color: var(--text-color);
+}
+
+.score-base {
+  font-size: 0.9em;
+  color: #888;
+  margin-left: 2px;
+}
+
+.score-danger .score-value {
+  color: #d93025;
+}
+
+.score-warning .score-value {
+  color: #ffc107;
+}
+
+/* Enhanced tooltip for lists */
+.client-score-display .tooltip-text {
+  width: 220px;
+  right: 0; /* Align to the right of the container */
+  text-align: right;
+  padding: 8px;
+  bottom: 125%;
+}
+
+.client-score-display .tooltip-text::after {
+  right: 15px; /* Position arrow on the right side */
+  left: auto;
+  transform: none;
+}
+
+.tooltip-text ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tooltip-text li {
+  padding: 2px 0;
+}

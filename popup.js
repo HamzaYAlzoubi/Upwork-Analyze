@@ -317,10 +317,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let icon = '';
             let tooltipText = '';
 
-            if (totalMonths < 6) {
+            if (totalMonths < 3) {
                 icon = paymentNotVerifiedIcon; // RED
                 tooltipText = 'العميل جديد على المنصة. لا يوجد تاريخ طويل كافٍ للحكم على موثوقيته واستقراره.';
-            } else if (totalMonths >= 6 && totalMonths <= 12) {
+            } else if (totalMonths >= 3 && totalMonths <= 12) {
                 icon = proposalsWarningIcon; // YELLOW
                 tooltipText = 'العميل لديه أقدمية مقبولة على المنصة، لكنها لا تعتبر فترة طويلة لضمان الاستقرار الكامل.';
             } else if (totalMonths > 12 && totalMonths < 24) {
@@ -611,7 +611,13 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="data-section">
-        <h3>Client Details</h3>
+        <div class="section-header">
+          <h3>Client Details</h3>
+          <div class="client-score-display">
+            <span class="score-value">-.--</span>
+            <span class="score-base">/ 10</span>
+          </div>
+        </div>
         <dl>
           <dt>Payment Verified</dt><dd>${paymentVerifiedIconWithTooltip} ${data.paymentVerified}</dd>
           <dt>Rating</dt><dd>${starRating} ${data.rating} (${data.reviewsCount}) ${clientRatingIconWithTooltip}</dd>
