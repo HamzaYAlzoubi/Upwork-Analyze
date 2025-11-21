@@ -1263,6 +1263,7 @@ ${historyText}
     let skills = JSON.parse(localStorage.getItem(storageKey)) || []; // Array of objects: {text: string, count: number}
 
     function renderSkills() {
+      skills.sort((a, b) => b.count - a.count);
       const existingTags = container.querySelectorAll('.tag');
       existingTags.forEach(t => t.remove());
       skills.forEach(skill => {
@@ -1280,19 +1281,28 @@ ${historyText}
       textEl.textContent = skill.text;
       tagEl.appendChild(textEl);
 
-      // Conditionally create and append the counter element if count > 1
+      // Conditionally create and append the counter and minus button if count > 1
       if (skill.count > 1) {
         const countEl = document.createElement('span');
         countEl.className = 'tag-counter';
         countEl.textContent = skill.count - 1;
         tagEl.appendChild(countEl);
+
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'tag-minus-button';
+        minusBtn.textContent = '−'; // Minus sign
+        minusBtn.onclick = (e) => {
+          e.stopPropagation();
+          decrementSkill(skill.text);
+        };
+        tagEl.appendChild(minusBtn);
       }
 
       const closeBtn = document.createElement('button');
       closeBtn.className = 'tag-close';
       closeBtn.innerHTML = '&times;';
       closeBtn.onclick = (e) => { 
-        e.stopPropagation(); // Prevent container's click event
+        e.stopPropagation();
         removeSkill(skill.text); 
       };
       
@@ -1312,6 +1322,17 @@ ${historyText}
       }
       renderSkills();
       input.value = '';
+    }
+
+    function decrementSkill(text) {
+        const skill = skills.find(s => s.text === text);
+        if (skill) {
+            skill.count--;
+            if (skill.count <= 1) { // When count drops to 1, the counter disappears
+                skill.count = 1; // Reset to 1 to just show the tag
+            }
+            renderSkills();
+        }
     }
 
     function removeSkill(text) {

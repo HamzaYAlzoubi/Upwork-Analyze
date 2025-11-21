@@ -609,13 +609,41 @@ dd {
   color: #3a539b;
 }
 
-.tag-counter {
+/* --- Styles for Counter/Minus Button --- */
+.tag-counter, .tag-minus-button {
+  display: inline-flex; /* Use flex to easily center content */
+  align-items: center;
+  justify-content: center;
   background-color: rgba(0,0,0,0.08);
   border-radius: 10px;
   padding: 2px 6px;
   font-size: 11px;
   font-weight: 700;
   margin-left: 4px;
+  min-width: 8px; /* Ensures a minimum width even for single-digit numbers */
+  text-align: center;
+}
+
+.tag-minus-button {
+  display: none; /* Hidden by default */
+  background-color: rgba(0,0,0,0.1);
+  color: inherit;
+  border: none;
+  cursor: pointer;
+  font-size: 14px; /* Make minus sign a bit bigger */
+  line-height: 1; /* Adjust for vertical centering */
+}
+
+.tag-minus-button:hover {
+  background-color: rgba(0,0,0,0.2);
+}
+
+.tag:hover .tag-counter {
+  display: none;
+}
+
+.tag:hover .tag-minus-button {
+  display: inline-flex;
 }
 
 .tag-close {
