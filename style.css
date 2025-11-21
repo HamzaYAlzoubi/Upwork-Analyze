@@ -524,9 +524,9 @@ dd {
 
 .currency-input-container input[type="text"] {
   width: 100%;
-  padding: 8px 30px 8px 24px; /* Top, Right (for clear btn), Bottom, Left (for $) */
+  padding: 10px 30px 10px 24px; /* Increased vertical padding */
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 20px; /* Pill-shaped */
   font-size: 14px;
   box-sizing: border-box; /* Important for padding and width calculation */
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -541,19 +541,27 @@ dd {
 .currency-input-container .clear-specific-btn {
   position: absolute;
   right: 8px;
-  background: none;
+  background: transparent;
   border: none;
-  color: #aaa;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: bold;
   padding: 0;
-  line-height: 1;
-  transition: color 0.2s ease;
+  cursor: pointer;
+  /* The button is now just a wrapper, most styles moved to the SVG */
 }
 
-.currency-input-container .clear-specific-btn:hover {
-  color: #333;
+.currency-input-container .clear-specific-btn svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  color: #aaa;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.currency-input-container .clear-specific-btn:hover svg {
+  color: #fff;
+  background-color: #ccc;
 }
 
 /* --- Mismatched Qualifications Section (Modern Design) --- */
