@@ -1,5 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
   const analysisResultsDiv = document.getElementById('analysis-results');
+  const placeholderScreen = document.getElementById('placeholder-screen');
+  const errorScreen = document.getElementById('error-screen');
+  const headerDiv = document.querySelector('.header');
+  const reloadBtn = document.getElementById('reload-btn');
   
   // --- Modal Elements ---
   const suggestionsModal = document.getElementById('suggestions-modal');
@@ -68,7 +72,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check if the tab is an Upwork job page
     if (!tabs[0].url.includes('upwork.com/jobs/')) {
-      analysisResultsDiv.innerHTML = '<p class="error">This is not an Upwork job page. Please navigate to a job post to use this extension.</p>';
+      headerDiv.style.display = 'none';
+      analysisResultsDiv.style.display = 'none';
+      placeholderScreen.style.display = 'flex';
       return;
     }
     
@@ -78,7 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }, () => {
       chrome.tabs.sendMessage(tabs[0].id, { action: 'analyzeJob' }, (response) => {
         if (chrome.runtime.lastError) {
-          analysisResultsDiv.innerHTML = `<p class="error">Error: ${chrome.runtime.lastError.message}</p>`;
+          headerDiv.style.display = 'none';
+          analysisResultsDiv.style.display = 'none';
+          errorScreen.style.display = 'flex';
           return;
         }
         if (response && response.jobData) {
@@ -1214,6 +1222,11 @@ ${historyText}
     toggleClearRateButton();
     preferredFixedPriceInput.value = '';
     toggleClearFixedPriceButton();
+  });
+
+  // --- Reload Button Logic ---
+  reloadBtn.addEventListener('click', () => {
+    location.reload();
   });
 
 });
