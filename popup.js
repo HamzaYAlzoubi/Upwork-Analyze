@@ -1094,6 +1094,68 @@ ${historyText}
 `;
   }
 
+  // --- NEW TAG INPUT LOGIC ---
+  function setupTagInput(containerId, inputId, storageKey, tagClass) {
+    const container = document.getElementById(containerId);
+    const input = document.getElementById(inputId);
+    if (!container || !input) return; // Guard against missing elements
+    let tags = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+    function renderTags() {
+      const existingTags = container.querySelectorAll('.tag');
+      existingTags.forEach(t => t.remove());
+      tags.forEach(tagText => {
+        const tagEl = createTag(tagText);
+        container.insertBefore(tagEl, input);
+      });
+    }
+
+    function createTag(text) {
+      const tagEl = document.createElement('div');
+      tagEl.className = `tag ${tagClass}`;
+      const textEl = document.createElement('span');
+      textEl.textContent = text;
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'tag-close';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = () => removeTag(text);
+      tagEl.appendChild(textEl);
+      tagEl.appendChild(closeBtn);
+      return tagEl;
+    }
+
+    function addTag(text) {
+      const trimmedText = text.trim();
+      if (trimmedText && !tags.includes(trimmedText)) {
+        tags.push(trimmedText);
+        localStorage.setItem(storageKey, JSON.stringify(tags));
+        renderTags();
+      }
+      input.value = '';
+    }
+
+    function removeTag(text) {
+      tags = tags.filter(t => t !== text);
+      localStorage.setItem(storageKey, JSON.stringify(tags));
+      renderTags();
+    }
+
+    input.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        addTag(input.value);
+      }
+    });
+    container.addEventListener('click', () => input.focus());
+    renderTags();
+    
+    // Attach a clearing function to the container element itself
+    container.clearAllTags = () => {
+        tags = [];
+        localStorage.removeItem(storageKey);
+        renderTags();
+    }
+  }
+
   // --- Profile Modal Logic ---
   const experienceRadios = document.querySelectorAll('input[name="experienceLevel"]');
   const savedExperience = localStorage.getItem('userExperienceLevel');
@@ -1119,13 +1181,13 @@ ${historyText}
     });
   });
 
-  // --- NEW, CLEAN BUDGET LOGIC (Module 2: Visuals) ---
+  // --- Budget Logic (Visuals) ---
   const budgetRadios = document.querySelectorAll('input[name="budget-type"]');
   const hourlyInputWrapper = document.getElementById('hourly-input-wrapper');
   const fixedInputWrapper = document.getElementById('fixed-input-wrapper');
 
   function updateBudgetVisibility() {
-    const selectedType = document.querySelector('input[name="budget-type"]:checked').value;
+    const selectedType = document.querySelector('input[name="budget-type"]:checked')?.value || 'hourly';
     if (selectedType === 'hourly') {
       hourlyInputWrapper.classList.add('is-active');
       fixedInputWrapper.classList.remove('is-active');
@@ -1147,26 +1209,20 @@ ${historyText}
     const radioToCheck = document.querySelector(`input[name="budget-type"][value="${savedBudgetType}"]`);
     if (radioToCheck) radioToCheck.checked = true;
   }
-  
-  // Set the initial correct view on load
   updateBudgetVisibility();
 
-  // --- NEW, CLEAN BUDGET LOGIC (Module 3: Data) ---
+  // --- Budget Logic (Data) ---
   function setupInputListener(inputEl, clearBtn, storageKey) {
     const toggleClearButton = () => {
-      if (clearBtn) { // Defensive check
+      if (clearBtn) {
         clearBtn.style.display = inputEl.value ? 'block' : 'none';
       }
     };
-
-    // Load saved value from localStorage
     const savedValue = localStorage.getItem(storageKey);
     if (savedValue) {
       inputEl.value = savedValue;
     }
     toggleClearButton();
-
-    // Save value to localStorage on input
     inputEl.addEventListener('input', (event) => {
       let value = event.target.value.replace(/[^0-9.]/g, '');
       const parts = value.split('.');
@@ -1177,8 +1233,6 @@ ${historyText}
       localStorage.setItem(storageKey, value);
       toggleClearButton();
     });
-
-    // Handle the clear button click
     if (clearBtn) {
       clearBtn.addEventListener('click', () => {
         localStorage.removeItem(storageKey);
@@ -1189,7 +1243,6 @@ ${historyText}
     }
   }
 
-  // Setup the listeners for both budget inputs
   const preferredRateInput = document.getElementById('preferred-rate');
   const clearRateBtn = document.getElementById('clear-rate-btn');
   setupInputListener(preferredRateInput, clearRateBtn, 'userPreferredRate');
@@ -1198,39 +1251,167 @@ ${historyText}
   const clearFixedPriceBtn = document.getElementById('clear-fixed-price-btn');
   setupInputListener(preferredFixedPriceInput, clearFixedPriceBtn, 'userPreferredFixedPrice');
 
+  // --- Initialize Tag Inputs ---
+  setupTagInput('positive-keywords-container', 'positive-keywords-input', 'positiveKeywords', 'tag-positive');
+  setupTagInput('negative-keywords-container', 'negative-keywords-input', 'negativeKeywords', 'tag-negative');
+  
+  // --- Specialized "Missing Skills" Logic with Counter ---
+  function setupMissingSkillsInput(containerId, inputId, storageKey, tagClass) {
+    const container = document.getElementById(containerId);
+    const input = document.getElementById(inputId);
+    if (!container || !input) return;
+    let skills = JSON.parse(localStorage.getItem(storageKey)) || []; // Array of objects: {text: string, count: number}
 
-  // --- Clear Selections Logic ---
+    function renderSkills() {
+      skills.sort((a, b) => b.count - a.count);
+      const existingTags = container.querySelectorAll('.tag');
+      existingTags.forEach(t => t.remove());
+      skills.forEach(skill => {
+        const tagEl = createSkillTag(skill);
+        container.insertBefore(tagEl, input);
+      });
+      localStorage.setItem(storageKey, JSON.stringify(skills));
+    }
+
+    function createSkillTag(skill) {
+      const tagEl = document.createElement('div');
+      tagEl.className = `tag ${tagClass}`;
+      
+      const textEl = document.createElement('span');
+      textEl.textContent = skill.text;
+
+      const actionsEl = document.createElement('div');
+      actionsEl.className = 'tag-actions';
+
+      // --- Default visible element ---
+      const countEl = document.createElement('span');
+      countEl.className = 'tag-counter';
+      countEl.textContent = skill.count;
+
+      // --- Hover-visible elements ---
+      const opButtonsEl = document.createElement('div');
+      opButtonsEl.className = 'tag-op-buttons';
+
+      const plusBtn = document.createElement('button');
+      plusBtn.className = 'tag-op-button';
+      plusBtn.textContent = '+';
+      plusBtn.onclick = (e) => { e.stopPropagation(); incrementSkill(skill.text); };
+
+      const minusBtn = document.createElement('button');
+      minusBtn.className = 'tag-op-button';
+      minusBtn.textContent = '−'; // Minus sign
+      minusBtn.onclick = (e) => { e.stopPropagation(); decrementSkill(skill.text); };
+      
+      opButtonsEl.appendChild(minusBtn);
+      opButtonsEl.appendChild(plusBtn);
+      
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'tag-close';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = (e) => { e.stopPropagation(); removeSkill(skill.text); };
+      
+      actionsEl.appendChild(countEl);
+      actionsEl.appendChild(opButtonsEl);
+      
+      tagEl.appendChild(textEl);
+      tagEl.appendChild(actionsEl);
+      tagEl.appendChild(closeBtn);
+      return tagEl;
+    }
+
+    function incrementOrAddSkill(text) {
+      const trimmedText = text.trim();
+      if (!trimmedText) return;
+      const lowerCaseText = trimmedText.toLowerCase();
+      const existingSkill = skills.find(s => s.text.toLowerCase() === lowerCaseText);
+      if (existingSkill) {
+        existingSkill.count++;
+      } else {
+        skills.push({ text: trimmedText, count: 1 });
+      }
+      renderSkills();
+      input.value = '';
+    }
+
+    function incrementSkill(text) {
+        const skill = skills.find(s => s.text === text);
+        if (skill) {
+            skill.count++;
+            renderSkills();
+        }
+    }
+
+    function decrementSkill(text) {
+        const skill = skills.find(s => s.text === text);
+        if (skill) {
+            skill.count--;
+            if (skill.count <= 0) {
+                removeSkill(text);
+            } else {
+                renderSkills();
+            }
+        }
+    }
+
+    function removeSkill(text) {
+      skills = skills.filter(s => s.text !== text);
+      renderSkills();
+    }
+
+    input.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        incrementOrAddSkill(input.value);
+      }
+    });
+    container.addEventListener('click', () => input.focus());
+    renderSkills();
+    
+    container.clearAllTags = () => {
+        skills = [];
+        renderSkills();
+    }
+  }
+
+  setupMissingSkillsInput('missing-skills-container', 'missing-skills-input', 'missingSkills', 'tag-missing');
+
+  // --- COMPLETE CLEAR SELECTIONS LOGIC ---
   const clearProfileBtn = document.getElementById('clear-profile-btn');
   clearProfileBtn.addEventListener('click', () => {
-    // Clear from localStorage
+    // Clear all localStorage items
     localStorage.removeItem('userExperienceLevel');
     localStorage.removeItem('userJobTypePreference');
     localStorage.removeItem('userPreferredRate');
     localStorage.removeItem('userPreferredFixedPrice');
     localStorage.removeItem('budgetTypePreference');
+    localStorage.removeItem('positiveKeywords');
+    localStorage.removeItem('negativeKeywords');
+    localStorage.removeItem('missingSkills');
 
     // Uncheck all radio buttons
     const allRadios = document.querySelectorAll('#profile-modal input[type="radio"]');
-    allRadios.forEach(radio => {
-      radio.checked = false;
-    });
+    allRadios.forEach(radio => radio.checked = false);
     
-    // Manually set the budget toggle to default (hourly) and update view
+    // Reset budget toggle to default and update view
     const budgetHourlyRadio = document.getElementById('budget-hourly');
-    if(budgetHourlyRadio) {
+    if (budgetHourlyRadio) {
       budgetHourlyRadio.checked = true;
       updateBudgetVisibility();
     }
 
-    // Clear the input fields and update their clear buttons
-    if(preferredRateInput) {
+    // Clear budget inputs and their clear buttons
+    if (preferredRateInput) {
       preferredRateInput.value = '';
-      if(clearRateBtn) clearRateBtn.style.display = 'none';
+      if (clearRateBtn) clearRateBtn.style.display = 'none';
     }
-    if(preferredFixedPriceInput) {
+    if (preferredFixedPriceInput) {
       preferredFixedPriceInput.value = '';
-      if(clearFixedPriceBtn) clearFixedPriceBtn.style.display = 'none';
+      if (clearFixedPriceBtn) clearFixedPriceBtn.style.display = 'none';
     }
+
+    // Clear the tag UI for all containers
+    document.getElementById('positive-keywords-container').clearAllTags();
+    document.getElementById('negative-keywords-container').clearAllTags();
+    document.getElementById('missing-skills-container').clearAllTags();
   });
 
   // --- Reload Button Logic ---

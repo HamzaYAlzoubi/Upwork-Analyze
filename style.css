@@ -564,6 +564,127 @@ dd {
   background-color: #ccc;
 }
 
+/* --- Tag Input Field --- */
+.keywords-section {
+  margin-bottom: 12px;
+}
+.keywords-section label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #555;
+}
+.tag-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 20px; /* Pill-shaped container */
+  cursor: text;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.tag-input-container:focus-within {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(20, 168, 0, 0.2);
+}
+.tag {
+  display: flex;
+  align-items: center;
+  padding: 4px 4px 4px 10px;
+  border-radius: 16px;
+  font-weight: 500;
+  font-size: 13px;
+}
+.tag-positive {
+  background-color: #e7f3e7;
+  color: #0d652d;
+}
+.tag-negative {
+  background-color: #fdecea;
+  color: #a91b0d;
+}
+.tag-missing {
+  background-color: #eaf0f6;
+  color: #3a539b;
+}
+
+.tag-actions {
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  gap: 4px;
+}
+
+.tag-counter {
+  background-color: rgba(0,0,0,0.08);
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.tag-op-buttons {
+  display: none; /* Hidden by default */
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+}
+
+.tag-op-button {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 20px;
+  background-color: rgba(0,0,0,0.1);
+  color: inherit;
+}
+.tag-op-button:hover {
+  background-color: rgba(0,0,0,0.2);
+}
+
+/* On hover, swap visibility */
+.tag:hover .tag-counter {
+  display: none;
+}
+.tag:hover .tag-op-buttons {
+  display: flex;
+}
+
+.tag-close {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: rgba(0,0,0,0.1);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  font-size: 12px;
+  line-height: 1;
+}
+.tag-close:hover {
+  background-color: rgba(0,0,0,0.3);
+}
+.tag-input {
+  flex-grow: 1;
+  border: none;
+  outline: none;
+  padding: 4px;
+  background: transparent;
+  min-width: 120px;
+}
+
 /* --- Mismatched Qualifications Section (Modern Design) --- */
 .mismatch-section {
   /* Inherits card styles from .data-section */
