@@ -1263,7 +1263,6 @@ ${historyText}
     let skills = JSON.parse(localStorage.getItem(storageKey)) || []; // Array of objects: {text: string, count: number}
 
     function renderSkills() {
-      skills.sort((a, b) => b.count - a.count);
       const existingTags = container.querySelectorAll('.tag');
       existingTags.forEach(t => t.remove());
       skills.forEach(skill => {
@@ -1279,42 +1278,24 @@ ${historyText}
       
       const textEl = document.createElement('span');
       textEl.textContent = skill.text;
+      tagEl.appendChild(textEl);
 
-      const actionsEl = document.createElement('div');
-      actionsEl.className = 'tag-actions';
+      // Conditionally create and append the counter element if count > 1
+      if (skill.count > 1) {
+        const countEl = document.createElement('span');
+        countEl.className = 'tag-counter';
+        countEl.textContent = skill.count - 1;
+        tagEl.appendChild(countEl);
+      }
 
-      // --- Default visible element ---
-      const countEl = document.createElement('span');
-      countEl.className = 'tag-counter';
-      countEl.textContent = skill.count;
-
-      // --- Hover-visible elements ---
-      const opButtonsEl = document.createElement('div');
-      opButtonsEl.className = 'tag-op-buttons';
-
-      const plusBtn = document.createElement('button');
-      plusBtn.className = 'tag-op-button';
-      plusBtn.textContent = '+';
-      plusBtn.onclick = (e) => { e.stopPropagation(); incrementSkill(skill.text); };
-
-      const minusBtn = document.createElement('button');
-      minusBtn.className = 'tag-op-button';
-      minusBtn.textContent = '−'; // Minus sign
-      minusBtn.onclick = (e) => { e.stopPropagation(); decrementSkill(skill.text); };
-      
-      opButtonsEl.appendChild(minusBtn);
-      opButtonsEl.appendChild(plusBtn);
-      
       const closeBtn = document.createElement('button');
       closeBtn.className = 'tag-close';
       closeBtn.innerHTML = '&times;';
-      closeBtn.onclick = (e) => { e.stopPropagation(); removeSkill(skill.text); };
+      closeBtn.onclick = (e) => { 
+        e.stopPropagation(); // Prevent container's click event
+        removeSkill(skill.text); 
+      };
       
-      actionsEl.appendChild(countEl);
-      actionsEl.appendChild(opButtonsEl);
-      
-      tagEl.appendChild(textEl);
-      tagEl.appendChild(actionsEl);
       tagEl.appendChild(closeBtn);
       return tagEl;
     }
@@ -1331,26 +1312,6 @@ ${historyText}
       }
       renderSkills();
       input.value = '';
-    }
-
-    function incrementSkill(text) {
-        const skill = skills.find(s => s.text === text);
-        if (skill) {
-            skill.count++;
-            renderSkills();
-        }
-    }
-
-    function decrementSkill(text) {
-        const skill = skills.find(s => s.text === text);
-        if (skill) {
-            skill.count--;
-            if (skill.count <= 0) {
-                removeSkill(text);
-            } else {
-                renderSkills();
-            }
-        }
     }
 
     function removeSkill(text) {

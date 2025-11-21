@@ -609,53 +609,13 @@ dd {
   color: #3a539b;
 }
 
-.tag-actions {
-  display: flex;
-  align-items: center;
-  margin-left: 8px;
-  gap: 4px;
-}
-
 .tag-counter {
   background-color: rgba(0,0,0,0.08);
   border-radius: 10px;
   padding: 2px 6px;
   font-size: 11px;
   font-weight: 700;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
-}
-
-.tag-op-buttons {
-  display: none; /* Hidden by default */
-  align-items: center;
-  gap: 4px;
-  transition: opacity 0.15s ease, visibility 0.15s ease;
-}
-
-.tag-op-button {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  line-height: 20px;
-  background-color: rgba(0,0,0,0.1);
-  color: inherit;
-}
-.tag-op-button:hover {
-  background-color: rgba(0,0,0,0.2);
-}
-
-/* On hover, swap visibility */
-.tag:hover .tag-counter {
-  display: none;
-}
-.tag:hover .tag-op-buttons {
-  display: flex;
+  margin-left: 4px;
 }
 
 .tag-close {
@@ -672,6 +632,11 @@ dd {
   margin-left: 6px;
   font-size: 12px;
   line-height: 1;
+}
+
+/* Override for missing tags to make them more compact */
+.tag-missing .tag-close {
+  margin-left: 4px;
 }
 .tag-close:hover {
   background-color: rgba(0,0,0,0.3);
