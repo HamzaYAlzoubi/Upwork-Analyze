@@ -103,19 +103,29 @@
           </div>
         </fieldset>
         <fieldset>
-          <legend>Your Preferred Hourly Rate?</legend>
-          <div class="currency-input-container">
-            <span class="currency-symbol">$</span>
-            <input type="text" id="preferred-rate" name="preferred-rate" placeholder="25" inputmode="decimal">
-            <button id="clear-rate-btn" class="clear-specific-btn" title="Clear Rate" style="display: none;">✖</button>
+          <legend>Your Minimum Budget</legend>
+          <div class="budget-toggle">
+            <input type="radio" id="budget-hourly" name="budget-type" value="hourly" checked />
+            <label for="budget-hourly">Hourly</label>
+            <input type="radio" id="budget-fixed" name="budget-type" value="fixed" />
+            <label for="budget-fixed">Fixed-Price</label>
+            <div class="toggle-slider"></div>
           </div>
-        </fieldset>
-        <fieldset>
-          <legend>Your Minimum Fixed-Price?</legend>
-          <div class="currency-input-container">
-            <span class="currency-symbol">$</span>
-            <input type="text" id="preferred-fixed-price" name="preferred-fixed-price" placeholder="200" inputmode="decimal">
-            <button id="clear-fixed-price-btn" class="clear-specific-btn" title="Clear Fixed-Price" style="display: none;">✖</button>
+          <div class="budget-inputs-container">
+            <div class="budget-input-wrapper" id="hourly-input-wrapper">
+              <div class="currency-input-container">
+                <span class="currency-symbol">$</span>
+                <input type="text" id="preferred-rate" name="preferred-rate" placeholder="25" inputmode="decimal">
+                <button id="clear-rate-btn" class="clear-specific-btn" title="Clear Rate" style="display: none;">✖</button>
+              </div>
+            </div>
+            <div class="budget-input-wrapper" id="fixed-input-wrapper">
+              <div class="currency-input-container">
+                <span class="currency-symbol">$</span>
+                <input type="text" id="preferred-fixed-price" name="preferred-fixed-price" placeholder="200" inputmode="decimal">
+                <button id="clear-fixed-price-btn" class="clear-specific-btn" title="Clear Fixed-Price" style="display: none;">✖</button>
+              </div>
+            </div>
           </div>
         </fieldset>
   </div>

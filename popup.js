@@ -942,29 +942,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
           function getHourlyRateEvaluation(rate, experienceLevel, icons, userPreferredRate, isAverage) {
             const baseEval = performBaseRateEvaluation(rate, experienceLevel, icons);
-            const { paymentVerifiedIcon, proposalsWarningIcon } = icons;
+            const { paymentVerifiedIcon, proposalsWarningIcon, paymentNotVerifiedIcon } = icons;
             const prefix = isAverage ? 'متوسط ' : '';
 
             if (userPreferredRate && userPreferredRate > 0) {
                 if (rate >= userPreferredRate) {
+                    // NEW: If the base rate was "red" but it meets the user's minimum, show a yellow warning.
+                    if (baseEval.icon === paymentNotVerifiedIcon) {
+                        return {
+                            icon: proposalsWarningIcon, // Yellow icon
+                            tooltip: 'السعر منخفض جدًا بشكل عام، ولكنه يطابق الحد الأدنى الذي حددته.'
+                        };
+                    }
+
+                    // If base was already green, combine messages.
                     if (baseEval.icon === paymentVerifiedIcon) {
                         return { 
                             icon: baseEval.icon, 
-                            tooltip: baseEval.tooltip + ' وهو ايضا ما تبحث عنه.' 
+                            tooltip: baseEval.tooltip + ' وهو يطابق حدك الأدنى.' 
                         };
-                    } else {
+                    } else { // Otherwise (if base was yellow), override to green.
                         return { 
                             icon: paymentVerifiedIcon, 
-                            tooltip: `${prefix}سعر الساعة في هذه الوظيفة (${rate}$) يطابق أو يتجاوز السعر الذي تفضله.`
+                            tooltip: `${prefix}سعر الساعة في هذه الوظيفة (${rate}$) يطابق أو يتجاوز حدك الأدنى.`
                         };
                     }
                 } else {
+                    // Rate is below user's minimum.
                     return { 
-                        icon: proposalsWarningIcon, 
-                        tooltip: `${prefix}معدل الساعة المقترح (${rate}$) أقل من السعر المفضل لديك (${userPreferredRate}$).`
+                        icon: paymentNotVerifiedIcon, 
+                        tooltip: `${prefix}معدل الساعة المقترح (${rate}$) أقل من حدك الأدنى (${userPreferredRate}$).`
                     };
                 }
             }
+            // If no user rate is set, return the general evaluation.
             return baseEval;
           }
 
@@ -1085,120 +1096,107 @@ ${historyText}
 
   // --- Profile Modal Logic ---
   const experienceRadios = document.querySelectorAll('input[name="experienceLevel"]');
-
-  // Load saved experience level
   const savedExperience = localStorage.getItem('userExperienceLevel');
   if (savedExperience) {
     const radioToCheck = document.querySelector(`input[name="experienceLevel"][value="${savedExperience}"]`);
-    if (radioToCheck) {
-      radioToCheck.checked = true;
-    }
+    if (radioToCheck) radioToCheck.checked = true;
   }
-
-  // Save experience level on change
   experienceRadios.forEach(radio => {
     radio.addEventListener('change', (event) => {
       localStorage.setItem('userExperienceLevel', event.target.value);
     });
   });
 
-  // --- Job Type Preference Logic ---
   const jobTypeRadios = document.querySelectorAll('input[name="jobTypePreference"]');
-  
-  // Load saved job type preference
   const savedJobType = localStorage.getItem('userJobTypePreference');
   if (savedJobType) {
     const radioToCheck = document.querySelector(`input[name="jobTypePreference"][value="${savedJobType}"]`);
-    if (radioToCheck) {
-      radioToCheck.checked = true;
-    }
+    if (radioToCheck) radioToCheck.checked = true;
   }
-
-  // Save job type preference on change
   jobTypeRadios.forEach(radio => {
     radio.addEventListener('change', (event) => {
       localStorage.setItem('userJobTypePreference', event.target.value);
     });
   });
 
-  // --- Preferred Rate Logic ---
+  // --- NEW, CLEAN BUDGET LOGIC (Module 2: Visuals) ---
+  const budgetRadios = document.querySelectorAll('input[name="budget-type"]');
+  const hourlyInputWrapper = document.getElementById('hourly-input-wrapper');
+  const fixedInputWrapper = document.getElementById('fixed-input-wrapper');
+
+  function updateBudgetVisibility() {
+    const selectedType = document.querySelector('input[name="budget-type"]:checked').value;
+    if (selectedType === 'hourly') {
+      hourlyInputWrapper.classList.add('is-active');
+      fixedInputWrapper.classList.remove('is-active');
+    } else {
+      fixedInputWrapper.classList.add('is-active');
+      hourlyInputWrapper.classList.remove('is-active');
+    }
+  }
+
+  budgetRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      updateBudgetVisibility();
+      localStorage.setItem('budgetTypePreference', document.querySelector('input[name="budget-type"]:checked').value);
+    });
+  });
+
+  const savedBudgetType = localStorage.getItem('budgetTypePreference');
+  if (savedBudgetType) {
+    const radioToCheck = document.querySelector(`input[name="budget-type"][value="${savedBudgetType}"]`);
+    if (radioToCheck) radioToCheck.checked = true;
+  }
+  
+  // Set the initial correct view on load
+  updateBudgetVisibility();
+
+  // --- NEW, CLEAN BUDGET LOGIC (Module 3: Data) ---
+  function setupInputListener(inputEl, clearBtn, storageKey) {
+    const toggleClearButton = () => {
+      if (clearBtn) { // Defensive check
+        clearBtn.style.display = inputEl.value ? 'block' : 'none';
+      }
+    };
+
+    // Load saved value from localStorage
+    const savedValue = localStorage.getItem(storageKey);
+    if (savedValue) {
+      inputEl.value = savedValue;
+    }
+    toggleClearButton();
+
+    // Save value to localStorage on input
+    inputEl.addEventListener('input', (event) => {
+      let value = event.target.value.replace(/[^0-9.]/g, '');
+      const parts = value.split('.');
+      if (parts.length > 2) {
+        value = parts[0] + '.' + parts.slice(1).join('');
+      }
+      event.target.value = value;
+      localStorage.setItem(storageKey, value);
+      toggleClearButton();
+    });
+
+    // Handle the clear button click
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        localStorage.removeItem(storageKey);
+        inputEl.value = '';
+        toggleClearButton();
+        inputEl.focus();
+      });
+    }
+  }
+
+  // Setup the listeners for both budget inputs
   const preferredRateInput = document.getElementById('preferred-rate');
   const clearRateBtn = document.getElementById('clear-rate-btn');
+  setupInputListener(preferredRateInput, clearRateBtn, 'userPreferredRate');
 
-  // Function to show/hide clear button based on input value
-  const toggleClearRateButton = () => {
-    if (preferredRateInput.value) {
-      clearRateBtn.style.display = 'block';
-    } else {
-      clearRateBtn.style.display = 'none';
-    }
-  };
-
-  // Load saved preferred rate and set initial button visibility
-  const savedPreferredRate = localStorage.getItem('userPreferredRate');
-  if (savedPreferredRate) {
-    preferredRateInput.value = savedPreferredRate;
-  }
-  toggleClearRateButton(); // Set initial state
-
-  // Save preferred rate and validate input
-  preferredRateInput.addEventListener('input', (event) => {
-    // Allow only numbers and one decimal point
-    let value = event.target.value;
-    value = value.replace(/[^0-9.]/g, ''); // Remove non-numeric/non-dot characters
-    const parts = value.split('.');
-    if (parts.length > 2) { // If more than one dot
-      value = parts[0] + '.' + parts.slice(1).join('');
-    }
-    event.target.value = value;
-    
-    localStorage.setItem('userPreferredRate', value);
-    toggleClearRateButton();
-  });
-
-  // Clear preferred rate
-  clearRateBtn.addEventListener('click', () => {
-    localStorage.removeItem('userPreferredRate');
-    preferredRateInput.value = '';
-    toggleClearRateButton();
-    preferredRateInput.focus(); // For better UX
-  });
-
-  // --- Preferred Fixed-Price Logic ---
   const preferredFixedPriceInput = document.getElementById('preferred-fixed-price');
   const clearFixedPriceBtn = document.getElementById('clear-fixed-price-btn');
-
-  const toggleClearFixedPriceButton = () => {
-    if (preferredFixedPriceInput.value) {
-      clearFixedPriceBtn.style.display = 'block';
-    } else {
-      clearFixedPriceBtn.style.display = 'none';
-    }
-  };
-
-  const savedPreferredFixedPrice = localStorage.getItem('userPreferredFixedPrice');
-  if (savedPreferredFixedPrice) {
-    preferredFixedPriceInput.value = savedPreferredFixedPrice;
-  }
-  toggleClearFixedPriceButton();
-
-  preferredFixedPriceInput.addEventListener('input', (event) => {
-    let value = event.target.value.replace(/[^0-9.]/g, '');
-    const parts = value.split('.');
-    if (parts.length > 2) {
-      value = parts[0] + '.' + parts.slice(1).join('');
-    }
-    event.target.value = value;
-    localStorage.setItem('userPreferredFixedPrice', value);
-    toggleClearFixedPriceButton();
-  });
-
-  clearFixedPriceBtn.addEventListener('click', () => {
-    localStorage.removeItem('userPreferredFixedPrice');
-    preferredFixedPriceInput.value = '';
-    toggleClearFixedPriceButton();
-    preferredFixedPriceInput.focus();
-  });
+  setupInputListener(preferredFixedPriceInput, clearFixedPriceBtn, 'userPreferredFixedPrice');
 
 
   // --- Clear Selections Logic ---
@@ -1209,19 +1207,30 @@ ${historyText}
     localStorage.removeItem('userJobTypePreference');
     localStorage.removeItem('userPreferredRate');
     localStorage.removeItem('userPreferredFixedPrice');
-
+    localStorage.removeItem('budgetTypePreference');
 
     // Uncheck all radio buttons
     const allRadios = document.querySelectorAll('#profile-modal input[type="radio"]');
     allRadios.forEach(radio => {
       radio.checked = false;
     });
+    
+    // Manually set the budget toggle to default (hourly) and update view
+    const budgetHourlyRadio = document.getElementById('budget-hourly');
+    if(budgetHourlyRadio) {
+      budgetHourlyRadio.checked = true;
+      updateBudgetVisibility();
+    }
 
-    // Clear the rate input
-    preferredRateInput.value = '';
-    toggleClearRateButton();
-    preferredFixedPriceInput.value = '';
-    toggleClearFixedPriceButton();
+    // Clear the input fields and update their clear buttons
+    if(preferredRateInput) {
+      preferredRateInput.value = '';
+      if(clearRateBtn) clearRateBtn.style.display = 'none';
+    }
+    if(preferredFixedPriceInput) {
+      preferredFixedPriceInput.value = '';
+      if(clearFixedPriceBtn) clearFixedPriceBtn.style.display = 'none';
+    }
   });
 
   // --- Reload Button Logic ---
